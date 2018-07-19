@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="{{url('css/mui.min.css')}}" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="{{url('css/reset.css')}}" />
+	</head>
+	<style type="text/css">
+		.coupon {
+			position: fixed;
+			top: 44px;
+			left: 0;
+			right: 0;
+			bottom: 44px;
+			width: 100%;
+			height: 100%;
+			background-color: white;
+			font-family: "微软雅黑";
+			overflow: auto;
+			font-size: 1rem;
+		}
+		
+		.couponinp {
+			width: 100%;
+			padding: 5% 10%;
+			display: flex;
+		}
+		
+		.coubtn {
+			height: 2.5rem;
+			width: 6rem;
+			margin: 0 0.5rem;
+		}
+		
+		.couponone {
+			position: relative;
+			width: 95%;
+			margin-left: 2.5%;
+			margin-top: 1rem;
+			display: none;
+		}
+		
+		.couponimg {
+			width: 100%;
+		}
+		
+		.coupontext {
+			position: absolute;
+			top: 2.5rem;
+			left: 1.5rem;
+			color: #00a0dc;
+			font-size:2.5rem;
+		}
+		
+		
+		.shopname {
+			position: absolute;
+			top: 1.5rem;
+			right: 8.5rem;
+			color: black;
+		}
+		
+		.coupontime {
+			position: absolute;
+			top: 3.5rem;
+			right: 3.5rem;
+			color: gray;
+
+			background-repeat: no-repeat;
+		}
+		
+		.coupontdescribe {
+			position: absolute;
+			top: 5.5rem;
+			right: 2rem;
+			color: gray;
+
+		}
+	</style>
+
+	<body>
+		<header class="mui-bar mui-bar-nav" style="background: white;">
+			<a href="reckoning?desk_sn={{$desk_sn}}&lang={{$lang}}"><span class="mui-icon mui-icon-back return" style="color:black"></span></a>
+			<h1 class="mui-title" style="font-size: 1rem;">代金券</h1>
+		</header>
+		<div class="coupon">
+			<div class="couponinp">
+				<input type="text" class="input" />
+				<button class="coubtn">确认</button>
+			</div>
+			<div class="couponone">
+				<img class="couponimg" src="{{url('img/discount.png')}}" />
+				<div class="coupontext">฿50</div>
+				<div class="shopname">魔方旅行</div>
+				<div class="coupontime">2018年3月16日过期</div>
+				<div class="coupontdescribe">所有商品适用(酒水除外)</div>
+			</div>
+		</div>
+		
+		<script src="{{url('js/mui.min.js')}}"></script>
+		<script src="{{url('js/jquery-3.1.1.min.js')}}" type="text/javascript" charset="utf-8"></script>
+		<script type="text/javascript">
+			mui.init()
+			$(function() {
+				$('.coubtn').on('touchend', function() {
+					if($('.input').val() != '') {
+						$('.couponone').show()
+					}
+				})
+			})
+		</script>
+	</body>
+
+</html>
