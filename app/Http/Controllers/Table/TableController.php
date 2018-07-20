@@ -54,7 +54,7 @@ class TableController extends Controller
                 $arr['msg']="查询失败";
                 $arr['data'] = "";
          }
-         return json_encode($arr);
+         return json_encode($arr,JSON_UNESCAPED_UNICODE);
     }
     //首页-登录页
     public function index(Request $request)
