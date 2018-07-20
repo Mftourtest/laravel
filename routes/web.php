@@ -67,4 +67,10 @@ Route::group(['prefix' => 'waiter'], function() {
     Route::any('cancelorder','Waiter\RestaurantController@cancel_order');
     Route::any('manualprint','Waiter\RestaurantController@manual_print');
 });
+/**
+ * licongmin route
+ */
 
+Route::group(['middleware'=>'logins','prefix' => 'table'],function() {
+            Route::any('room', 'Table\TableController@room');
+});
