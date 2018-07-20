@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Waiter;
+namespace App\Http\Controllers\Table;
 
 use App;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ use App\Lib\Common\Printer;
 use App\Lib\Common\NewPrinter;
 use App\Models\Order;
 
-class RestaurantController extends Controller
+class TableController extends Controller
 {
     private $lang;
     private $suffix;
@@ -38,7 +38,24 @@ class RestaurantController extends Controller
         }
         date_default_timezone_set("Asia/Bangkok"); //系统时间设成泰国时区时间
     }
-
+    //返回餐厅的房间信息
+    public function room(Request $request) {
+        $p_id = session('id');
+        $rooms = DB::table('food_area')->where("partner_id",$p_id)->get()->toArray();
+        // echo "<pre>";
+        // var_dump($rooms);die;
+        $arr = [];
+        if($rooms) {
+                $arr['code']=1;
+                $arr['msg']="查询成功";
+                $arr['data'] = $rooms;
+         }else{
+                $arr['code']=0;
+                $arr['msg']="查询失败";
+                $arr['data'] = "";
+         }
+         return json_encode($arr);
+    }
     //首页-登录页
     public function index(Request $request)
     {
@@ -95,10 +112,7 @@ class RestaurantController extends Controller
     //获取餐厅区域桌位信息
     public function desk_info()
     {
-
-
-
-
+        // echo 123;die;
         $p_id = session('partner_id');
         //如果session过期就跳回登录页
         if(empty($p_id)){
@@ -807,15 +821,6 @@ class RestaurantController extends Controller
 
     public function test(Request $request)
     {
-
-        $p_id = session('partner_id');
-        $foodname = 'B00';
-        $foodcate = DB::table('food_cate')->where('partner_id',$p_id)->first();
-        $team_id = $foodcate->team_id;
-        $search_foods = DB::table('food')->where('team_id',$team_id)->where('title','like',"%$foodname%")->get()->map(function ($value) {return (array)$value;})->toArray();
-        dump($search_foods);
-        echo $team_id;
-
         // echo  123456;die;
         $p_id = session('partner_id');
         // echo $p_id;
@@ -826,7 +831,6 @@ class RestaurantController extends Controller
       $search_foods = DB::table('food')->where('team_id',$team_id)->first();
         //return  json_encode($search_foods);
          echo $team_id;
-
     }
     
 }
