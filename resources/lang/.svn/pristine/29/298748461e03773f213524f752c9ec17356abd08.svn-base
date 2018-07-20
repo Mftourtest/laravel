@@ -1,0 +1,243 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: zhaoyao
+ * Date: 2018/04/23
+ * Time: 16:02
+ */
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Foods Language Lines
+    |--------------------------------------------------------------------------
+    |
+    |
+    */
+
+// 导航栏
+    'biz_nav1' => 'หน้าหลัก', //'主页',
+    'biz_nav2' => 'ข้อมูลเจ้าของกิจการ', //'商户资料',
+    'biz_nav3' => 'ออร์เดอร์', //'订单',
+    'biz_nav4' => 'รายการชำระเงิน', //'消费券列表',
+    'biz_nav5' => 'ความพึงพอใจลูกค้า', //'用户评分',
+    'biz_nav6' => 'กำลังทำการตกลงรายการ',//'待确定订单',
+    'biz_nav7' => 'ใช้โค้ดจ่ายเงิน',//'扫码结算',
+
+
+
+//public
+    'biz_operation' => 'ดำเนินการ',//'操作',
+    'biz_team_name' => 'ชื่อรายการ',//'项目名称',
+    'biz_detail' => 'รายละเอียด',//'详情',
+    'biz_city' => 'จังหวัด',//'城市',
+    'biz_user' => 'ผูใช้',//'用户',
+    'biz_team_title' => 'ชื่อรายการ',//'项目名称',
+    'biz_btn_find' => 'ดาวน์โหลด',//'查找',
+    'biz_btn_download' => 'ดาวน์โหลด',//'下载',
+    'biz_btn_filter' => 'คัดเลือก',//'筛选',
+
+
+
+//登录
+    'biz_login_title' => 'Merchant login',
+    'biz_login_username' => 'ชื่อผู้ใช้', //用户名
+    'biz_login_password' => 'กรุณาใส่รหัสผ่าน',          //密码
+    'biz_login_btn' => 'เข้าสู่ระบบ',                //登录
+    'sea_otter_life_waiter' => 'หมัวฟางพนักงานบริการ', //魔方服务员
+
+
+
+//主页Home
+    'biz_home_title' => '项目列表',
+    'biz_home_bargain' => '成交',
+    'biz_home_date' => '日期',
+    'biz_home_team_price' => '团购价',
+
+
+
+//商户信息
+    'biz_setting_1' => '1、登录信息',
+    'biz_setting_2' => '2、基本设置',
+    'biz_setting_3' => '3、银行信息',
+    'biz_setting_username' => '用户名',
+    'biz_setting_new_pwd' => '新密码',
+    'biz_setting_confirm_pwd' => '确认密码',
+    'biz_setting_partner_name' => '商户名称',
+    'biz_setting_web_url' => '网址',
+    'biz_setting_linkman' => '联系人',
+    'biz_setting_address' => '商户地址',
+    'biz_setting_phone' => '电话',
+    'biz_setting_email' => 'Email',
+    'biz_setting_mobile' => '手机',
+    'biz_setting_location' => '位置信息',
+    'biz_setting_other' => '其他信息',
+    'biz_setting_bank' => '开户行',
+    'biz_setting_name' => '开户名',
+    'biz_setting_account' => '银行账户',
+
+
+
+//订单
+    'biz_order_title1' => '套餐',
+    'biz_order_title2' => '扫码支付',
+    'biz_order_title3' => '扫码点餐',
+    'biz_order_list' => '付款订单列表',
+
+    'biz_order_id' => 'เลขที่ออร์เดอร์',//'订单编号',
+    'biz_order_nickname' => 'ล็อกอิน',//'微信昵称',
+    'biz_order_team_id' => 'หมายเลขรายการ',//'项目编号',
+    'biz_order_create_time' => 'เวลาออเดอร์',//'下单日期',
+    'biz_order_pay_time' => 'เวลาชำระเงิน',//'付款日期',
+    'biz_order_tour_time' => 'เวลาเดินทาง',//'出行日期',
+    'biz_order_time_ordering' => 'ลำดับเวลา',//'时间排序',
+
+    'biz_order_desk_sn' => 'เลขโต๊ะ',//'桌号',
+    'biz_order_price' => '价格',
+    'biz_order_op' => '操作',
+    'biz_order_detail' => '详情',
+    'biz_order_print' => '打印',
+
+    'biz_order_balance' => '结算',
+    'biz_order_volume' => '成交量',
+    'biz_order_turnover' => '成交额',
+
+
+
+//消费券
+    'biz_coupon_title' => '消费券列表',
+    'biz_coupon_read_status' => '查看状态',
+    'biz_coupon_status' => '状态',
+    'biz_coupon_create_time' => '创建日期',
+    'biz_coupon_package' => '套餐名称',
+    'biz_coupon_quantity' => '购买数量',
+
+
+
+//用户评分
+    'biz_comment_title' => '用户点评',
+    'biz_comment_project' => '项目：(ID or title)',
+    'biz_comment_degree' => '满意度',
+    'biz_comment_return' => '是否愿意再来',
+    'biz_comment_evaluate' => '评价',
+
+
+
+
+    /**
+     * 商户手机版后台
+     */
+    'x_biz_merchant_services' => 'เซิร์ฟเวอร์ผู้ขาย', //'商户服务',
+    'x_biz_scanning_code_payment' => 'การชำระเงินด้วยอารีย์แพร์',//'扫码支付',
+    'x_biz_scanning_code_ordering' => 'สแกนสั่งอาหาร',//'扫码点餐',
+    'x_biz_check_code1' => 'สแกนคิวอาร์โค้ด',//'扫描二维码消单',
+    'x_biz_check_code2' => '输入消费券码消单',
+
+    'x_biz_binding_wechat' => '商户绑定微信号',
+    'x_biz_update_gps' => '更新商户GPS坐标为我的坐标',
+    'x_biz_package_consumption_list' => 'ตารางค่าอาหารชุด',//'套餐消费列表',
+    'x_biz_total_consumption' => '消费合计',
+
+    'x_biz_exit' => 'ออกจากระบบ',//'退出',
+
+
+    'x_biz_home' => '我的',
+    'x_biz_my_merchant' => '我的商户',
+    'x_biz_my_credit' => '我的积分',
+    'x_biz_setting' => '设置',
+    'x_biz_bill' => '账单',
+    'x_biz_filter' => 'เลือก',//'筛选',
+    'x_biz_sum_today' => 'ยอดขายต่อวัน',//'今日交易金额',
+    'x_biz_count_today' => 'คำสั่งซื้อต่อวัน',//'今日交易笔数',
+    'x_biz_receipt' => 'รับเงินสำเร็จ',//'收款成功',
+    'x_biz_no_order' => '今天还未收到订单',
+
+    'x_biz_trans_time' => 'เวลาซื้อขาย',//'交易时间',
+    'x_biz_select_time' => 'เลือกเวลา',//'选择时间',
+    'x_biz_begin_time' => 'เวลาเริ่ม',//'开始时间',
+    'x_biz_end_time' => 'สิ้นสุดเวลา',//'结束时间',
+    'x_biz_ok' => 'ตกลง',//'确定',
+    'x_biz_reset' => 'รีเซ็ต',//'重置',
+
+    'x_biz_coll_details' => 'รายละเอียดการรับเง',//'收款详情',
+    'x_biz_refund' => '退款',
+    'x_biz_origin1' => 'เงินที่ได้รับ',//'实收金额',
+    'x_biz_origin2' => '交易金额',
+    'x_biz_trans_no' => 'หมายเลขบิล',//'交易单号',
+    'x_biz_pay_time' => 'เวลาชำระเงิน',//'交易时间',
+    'x_biz_pay_mod' => 'วีธีชำระเงิน',//'付款方式',
+    'x_biz_settlement_amount' => 'ยอดรวม',//'结算金额',
+    'x_biz_remark' => 'หมายเหตุ',
+    'x_biz_commission' => 'ค่าบริการ',//'手续费',
+    'x_biz_confirm_order' => '确认订单',
+    'x_biz_realname' => '姓名',
+    'x_biz_mobile' => '手机',
+
+
+
+//food2
+    'food_language' => 'vi',
+    'food_index' => 'สั่ง',
+    'food_partner' => 'ธุรกิจ',
+    'food_comment' => 'ความคิดเห็นที่',
+    'food_confirm' => 'การชำระเงิน',
+    'food_confirm2' => 'เพื่อยืนยันการสั่งซื้อ',
+    'food_env' => 'ร้านอาหารในสภาพแวดล้อม',
+    'food_coupon' => 'คูปอง',
+    'food_order' => 'ออเดอร์',
+    'food_restaurant' => 'ร้านอาหาร',
+    'food_toFood' => 'อาหาร',
+    'food_tax' => 'ภาษี', //税费
+    'food_charge' => 'ค่าบริการ', //服务费
+    'food_discount' => 'ส่วนลด',
+    'food_remark' => 'รสชาติ',
+    'food_total' => 'รวม',
+    'food_amount' => 'ยอดเงินที่ต้องจ่าย',
+    'food_order_details' => 'รายละเอียดสินค้า',
+    'food_pMethod' => 'วิธีการชําระเงิน',
+    'food_order_no' => 'หมายเลขการสั่งซื้อ',
+    'food_ntPay' => 'ต้องจ่าย',
+    'food_rate' => 'อัตราแลกเปลี่ยน',
+    'food_success' => 'ออเดอร์สำเร็จ',
+    'food_tip' => 'เชฟกำลังปรุงอาหารโปรดรอสักครู่',
+    'food_comment' => 'ความคิดเห็นที่',
+    'food_meal' => 'เพิ่มในอาหาร',
+    'food_pr_title' => 'ชื่อ', //名称
+    'food_pr_price' => 'ราคาต่อหน่วย', //单价
+    'food_pr_num' => 'จํานวน', //数量
+    'food_pr_total' => 'จํานวนเงิน', //金额
+    'food_pr_amount' => 'รวม', //合计
+    'food_pr_pay_type' => 'ประเภทการชำระเงิน',//支付类型
+
+    //服务员点餐
+    'please_enter_account' => 'กรุณาใส่รหัสร้านค้า', //请输入登录账号
+    'check_group_package' => 'ตรวจสอบ', //验证团购套餐券
+    'waiter_clear' => 'ลบทิ้ง', //清空
+    'waiter_confirm'=>'ตกลง', //确认
+    'waiter_specifications'=>'ขนาด', //规格
+    'waiter_choose_meal'=>'เลือกเมนู', //请选餐
+    'waiter_shopping_cart' => 'ตระกร้า', //购物车
+    'waiter_enter_remark' => 'ใส่หมายเหตุ', //请输入备注
+    'waiter_return_table' => 'กลับไปหน้าหลัก', //返回桌台
+    'waiter_check_out' => 'ชำระเงิน', //结账
+    'waiter_order_amount' => 'ยอดรวม', //订单金额
+    'waiter_discount' => 'ส่วนลด', //优惠
+    'waiter_cash_coupon' => 'คูปอง', //代金券
+    'waiter_receivable' => 'รวมทั้งสิ้น', //应收
+    'waiter_payment_method' => 'วิธีชำระเงิน',//收款方式
+    'waiter_cash' => 'เงินสด', //现金
+    'waiter_wechat' => 'Wechat', //微信
+    'waiter_alipay' => 'Alipay', //支付宝
+    'waiter_cash_receipts' => 'เงิน', //现金收款
+    'waiter_amount_payment' => 'กรุณาระบุจำนวนเงินที่จ่ายจริง',  //请输入实收金额
+    'waiter_give_change' => 'การเปลี่ยนแปลง', //找零
+    'waiter_scan_qr' => 'สแกนQRCode', //扫描二维码
+    'waiter_expiry_time' => 'เวลาที่หมดอายุ', // 到期时间
+    'waiter_add_dish' => 'ออเดอร์เพิ่ม', //加菜
+    'waiter_cancel_dish' => 'คืนอาหาร', //退菜
+    'waiter_point_menu' => 'ชื่อเมนู', //已点菜单
+    'waiter_refresh' => 'รีเฟรช', //刷新
+    'waiter_table_no' => 'เบอร์โต๊ะ', //点餐桌号
+    'waiter_menu' => 'ชื่อเมนู', //菜品名称
+];

@@ -1,0 +1,47 @@
+body,html{
+	margin: 0;
+	padding: 0;
+	font-family: "微软雅黑";
+	background: white;
+}
+.header {
+	background-color: white;
+	position: relative;
+	height: 3.5rem;
+	border-bottom: 0.06rem solid rgba(7,17,27,0.1);
+	line-height: 3.5rem;
+	display: flex;
+}
+.tubiao{
+	position: absolute;
+	left: 1rem;
+	top: 1.2rem;
+	
+}
+.getcoupon-title{
+	font-size: 1.5rem;
+	height: 3.5rem;
+	line-height: 3.5rem;
+	text-align: center;
+	width: 100%;
+}
+.glyphicon-remove{
+	position: absolute;
+    left: 1rem;
+    top: 1.2rem;
+}
+a:link { 
+	font-size: 12px; 
+	color: #000000; 
+	text-decoration: none; 
+} 
+a:visited { 
+	font-size: 12px; 
+	color: #000000; 
+	text-decoration: none; 
+} 
+a:hover { 
+	font-size: 12px; 
+	color:black;
+	text-decoration: underline; 
+} 

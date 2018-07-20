@@ -1,0 +1,70 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index')->name('home');
+Route::get('/test', 'TestController@index')->name('test');
+Route::get('/test2', 'TestController@test2')->name('test2');
+
+/**
+ * zy route
+ */
+Route::group(['prefix'=>'foods'], function () {
+    Route::get('/', 'Foods\FoodsController@index')->name('foods');
+    Route::get('home', 'Foods\FoodsController@home')->name('foods.home');
+    Route::any('confirm', 'Foods\FoodsController@confirm')->name('foods.confirm');
+    Route::any('order', 'Foods\FoodsController@order')->name('foods.order');
+    Route::any('pay', 'Foods\FoodsController@pay')->name('foods.pay');
+    Route::get('my_order', 'Foods\FoodsController@myOrder')->name('foods.myOrder');
+    Route::get('my_order_detail', 'Foods\FoodsController@myOrderDetail')->name('foods.myOrderDetail');
+    Route::any('comment', 'Foods\FoodsController@comment')->name('foods.comment');
+    Route::get('coupon', 'Foods\FoodsController@coupon')->name('foods.coupon');
+    Route::get('coupon_detail', 'Foods\FoodsController@couponDetail')->name('foods.couponDetail');
+    Route::any('coupon_share', 'Foods\FoodsController@couponShare')->name('foods.couponShare');
+    Route::any('team', 'Foods\FoodsController@team')->name('foods.team');
+    Route::any('done', 'Foods\FoodsController@done')->name('foods.done');
+});
+
+/**
+ * xujin route
+ */
+Route::group(['prefix' => 'waiter'], function() {
+    Route::any('index', 'Waiter\RestaurantController@index');
+    Route::any('test', 'Waiter\RestaurantController@test');
+    Route::any('order', 'Waiter\RestaurantController@food_info');
+    Route::any('reckoning', 'Waiter\RestaurantController@non_checkout');
+    Route::any('voucher', 'Waiter\RestaurantController@voucher');
+    Route::any('placeorder', 'Waiter\RestaurantController@placeorder_info');
+    Route::any('over', 'Waiter\RestaurantController@place_order');
+    Route::any('coupon', 'Waiter\RestaurantController@coupon');
+    Route::any('cash', 'Waiter\RestaurantController@cash');
+    Route::any('cashpay', 'Waiter\RestaurantController@confirm_payment');
+    Route::any('wechat', 'Waiter\RestaurantController@wechat');
+    Route::any('alipay', 'Waiter\RestaurantController@alipay');
+    Route::any('addroom', 'Waiter\RestaurantController@add_room');
+    Route::any('adddesk', 'Waiter\RestaurantController@add_desk');
+    Route::any('login', 'Waiter\RestaurantController@login_validator');
+    Route::any('empty', 'Waiter\RestaurantController@empty_desk');
+    Route::any('table', 'Waiter\RestaurantController@desk_info');
+    Route::any('menu','Waiter\RestaurantController@menu');
+    Route::any('orderover','Waiter\RestaurantController@orderover');
+    Route::any('discount','Waiter\RestaurantController@discount');
+    Route::any('cancelorder','Waiter\RestaurantController@cancel_order');
+    Route::any('manualprint','Waiter\RestaurantController@manual_print');
+});
+
