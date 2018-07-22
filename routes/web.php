@@ -71,7 +71,11 @@ Route::group(['prefix' => 'waiter'], function() {
 /**
  * licongmin route
  */
-
+//登陆
+Route::any('login', 'Table\TableController@login');
+//注册
+Route::any('register', 'Table\TableController@register');
+//接口路由
 Route::group(['middleware'=>'logins','prefix' => 'table'],function() {
             Route::any('room', 'Table\TableController@room');
 });

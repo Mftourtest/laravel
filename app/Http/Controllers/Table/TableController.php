@@ -40,28 +40,119 @@ class TableController extends Controller
     }
     //返回餐厅的房间信息
     public function room(Request $request) {
-        $p_id = session('id');
-        $rooms = DB::table('food_area')->where("partner_id",$p_id)->get()->toArray();
+        // $p_id = session('id');
+        //通过tocken查询出来用户id
+        $token = $request->input("token");
+        $partner_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+        // var_dump($partner_id);
+        $rooms = DB::table('food_area')->where("partner_id",$partner_id)->get()->toArray();
         // echo "<pre>";
         // var_dump($rooms);die;
         $arr = [];
         if($rooms) {
-                $arr['code']=1;
-                $arr['msg']="查询成功";
-                $arr['data'] = $rooms;
+            return  $this->json_encode(1,$rooms);
+                // $arr['code']=1;
+                // $arr['msg']="查询成功";
+                // $arr['data'] = $rooms;
+
          }else{
-                $arr['code']=0;
-                $arr['msg']="查询失败";
-                $arr['data'] = "";
+                // $arr['code']=0;
+                // $arr['msg']="查询失败";
+                // $arr['data'] = "";
+                return  $this->json_encode(0,"查询失败");
          }
-         return json_encode($arr,JSON_UNESCAPED_UNICODE);
+         // return json_encode($arr,JSON_UNESCAPED_UNICODE);
+    }
+    //接口注册，暂时不写
+    public function register(Request $request) {
+         // $userID = 'admin3';
+        // $userPwd = '123456';
+        // $userTel = '15939956756';
+        // $userID = isset($_POST['name']) ? $_POST['name'] : '';
+        // $userPwd = isset($_POST['password']) ? md5($_POST['password']) : '';
+        // $userTel = isset($_POST['tel']) ? $_POST['tel']:'';
+        // if(!empty($userID)&&!empty($userPwd)&&!empty($userTel)){
+        //     $sql = "select count(id) as num from userInfo where userTel='{$userTel}' or userID='{$userID}'";
+        //     $num = $this->db->fetchRow($sql);
+        //     //根据不同的返回结果，对其进行相应的响应
+        //     if ($num['num']==0) {
+        //         $sql = "insert into userInfo (userID,userPwd,userTel) values ('{$userID}','{$userPwd}','{$userTel}')";
+        //         // var_dump($sql);die;
+        //         $data = $this->db->query($sql);
+        //         if(!empty($data)){
+        //             Response::json(200,"注册成功",$data);
+        //         }else if(empty($data)){
+        //             Response::json(404,"记录不存在");
+        //         }else if($data==false){
+        //             Response::json(406,"读取数据失败");
+        //         }else{
+        //             Response::json(500,"服务器发生错误");
+        //         }
+        //     }else{
+        //         Response::json(400,"用户名或手机号重复",$num);
+        //     }
+        // }else{
+        //     Response::json(406,"读取数据失败");
+        // }
+    }
+    //接口登陆
+    public function login(Request $request) {
+         // $_POST['userID']='admin1';
+        // $_POST['userPwd']='123456';
+        $username = $request->input("userName");
+        $userpwd = $request->input("userPwd");
+        // echo $_POST['userID'];die;
+        if(empty($username) || empty($userpwd)){
+            return $this->json_encode(0,"请输入账号和密码");
+        }
+        // $userID=$_POST['userID'];
+        // $userPwd=$_POST['userPwd'];
+        // $userpwd=md5($userpwd);
+        $token = $this->setToken();
+        // echo $token;die;
+        // $time_out = strtotime("+7 days");
+        //连接数据库进行查询
+     // $data=$this->db->fetchRow("select userID,userName,userTel,url from userinfo where userID='{$userID}' and userPwd='{$userPwd}'");
+        $data = DB::table('partner_admin')->where(['account'=>$username,"password"=>$userpwd])->get()->toArray();
+        // dump($data[0]->id);die;
+        if(empty($data)){
+            // Response::show(404,'账号或密码输入错误');
+            // exit;
+            return $this->json_encode(1,"账号或密码输入错误");
+        }else{
+            //更新token到数据库
+            $data['token']=$token;
+             $num = DB::table('partner_admin')->where('id', $data[0]->id)->update(['token' => $token]);
+             if($num==1) {
+                    session(['username'=>$data[0]->account]);
+                    session(['id'=>$data[0]->id]);
+                    return $this->json_encode(2,$data);
+             }else{
+                    return $this->json_encode(3,"未知错误");
+
+             }
+
+        }
+
+      // $rst2=$this->db->query("update userinfo set token='{$token}',time_out='{$time_out}' where userID='{$userID}'");
+
+        // $cnt = $rst2->rowCount();
+         // var_dump($data);die;
+        //根据不同的返回结果，对其进行相应的响应
+        // if ($cnt >= 1) {
+        //     Response::json(201,"登录成功",$data);
+        // }else if ($rst2 == false) {
+        //     Response::json(407,"登录失败");
+        // } else {
+        //     Response::json(500,"未知错误");
+        // }
     }
     //首页-登录页
-    public function index(Request $request)
-    {
-        $cookies = $request->cookie();
-        return view('waiter/index')->with("lang",$this->lang)->with('cookies',$cookies);
-    }
+    // public function index(Request $request)
+    // {
+    //     $cookies = $request->cookie();
+    //     return view('waiter/index')->with("lang",$this->lang)->with('cookies',$cookies);
+    // }
 
     //带验证登陆
     public function login_validator()
