@@ -41,7 +41,7 @@ class TableController extends Controller
     //返回餐厅的房间信息
     public function room(Request $request) {
         // $p_id = session('id');
-        //通过tocken查询出来用户id
+        //通过token查询出来用户id
         $token = $request->input("token");
         $partner_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
         // var_dump($partner_id);
@@ -63,6 +63,113 @@ class TableController extends Controller
          }
          // return json_encode($arr,JSON_UNESCAPED_UNICODE);
     }
+    //返回房间桌位信息
+    public function table(Request $request) {
+         // echo 123;die;
+        // $p_id = session('partner_id');
+        //通过token查询出来用户id
+        $token = $request->input("token");
+        $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+        //如果session过期就跳回登录页
+        // if(empty($p_id)){
+        //     return redirect('waiter/index?lang='.$this->lang);
+        // }
+        // if($p_id){
+            // $areainfos = FoodArea::where('partner_id',$p_id)->get()->toArray();
+            $deskinfos = DB::table('food_area_desk')->join('food_desk_state', function($join)  
+            {  
+                $join->on('food_area_desk.desk_state', '=', 'food_desk_state.id');  
+            })->select('*')  
+              ->where('partner_id',$p_id)                 
+              ->orderBy('food_area_desk.desk_sn', 'asc')  
+              ->get()->toArray();   
+        // }
+        // dump($deskinfos);die;
+        if($deskinfos) {
+            $deskarr = [];
+            foreach ($deskinfos as $key => $deskinfo) {
+                $ordertemp = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)
+                             ->where('order_id',0)->first();
+                if(!empty($ordertemp)){
+                    if($deskinfo->desk_state!=3){
+                       DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>3]);
+                    }
+                }
+                else{
+                    if($deskinfo->desk_state==3){
+                        DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>1]);
+                    }
+                }
+                $deskarr[$key]['desk_sn'] = $deskinfo->desk_sn;
+                $deskarr[$key]['state_name'] = $deskinfo->state_name;
+                $deskarr[$key]['state_name_en'] = $deskinfo->state_name_en;
+                $deskarr[$key]['state_name_vi'] = $deskinfo->state_name_vi;
+                $deskarr[$key]['desk_state'] = $deskinfo->desk_state;
+                $deskarr[$key]['area_id'] = $deskinfo->area_id;
+            }
+          return  $this->json_encode(1,$deskarr);
+        }else{
+          return  $this->json_encode(0,"查询失败");
+
+        }
+        // dump($deskarr);
+        // return view('waiter/table')->with('areainfos',$areainfos)->with('suffix',$this->suffix)
+        // ->with('deskinfos',$deskarr)->with('lang',$this->lang);
+    }
+    //点击桌号返回订单信息
+     public function order(Request $request) {
+          //通过token查询出来用户id
+        $token = $request->input("token");
+        $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+        // $desk_sn = $_GET['desk_sn'];
+        // 获取桌位号
+        $desk_sn = $request->input("desk_sn");
+        $enomination = 0;
+        // $enomination = $_GET['price']; //代金券面额
+        // 获取代金券
+        $enomination = $request->input("price"); //代金券面额
+        $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();
+        $order_temp = DB::table('order_temp')->where('partner_id',$p_id)
+                                             ->where('desk_sn',$desk_sn)
+                                             ->where('order_id',0)->get();
+        $pinfo = Partner::find($p_id);
+        $total_price = 0;  //原总价
+        foreach($order_temp as $v){
+            $total_price =  $v->price * $v->number + $total_price;
+        }
+        $srv_price = round($total_price * $pinfo->fee_srv); //服务费
+        $tax_price = round($total_price * $pinfo->fee_tax); //税费
+        $discount_price = round($total_price * (1 - $pinfo->discount));    //打折要减去的价格
+        if($total_price-$discount_price+$srv_price+$tax_price>=$enomination){ //如果打折后价格大于代金券的价格
+            $last_price = round($total_price - $discount_price + $srv_price + $tax_price - $enomination);    //最终应付价格
+        }
+        else{
+            $last_price = 0;
+        }
+        //检查未结账订单是否已手动打印
+        $orderNewTemp = DB::table('order_temp')->where('partner_id',$p_id)
+                       ->where('desk_sn',$desk_sn)->where('is_print',0)
+                       ->where('order_id',0)->get();
+        if(!empty($orderNewTemp[0])){
+            $is_print = 1; //需要手动打印
+        }
+        else{
+            $is_print = 0; //不需要手动打印
+        }
+        $data = [];
+        $data['enomination']=$enomination;
+        $data['desk_sn']=$desk_sn;
+        $data['total_price']=$total_price;
+        $data['discount_price']=$discount_price;
+        $data['last_price']=$last_price;
+        $data['srv_price']=$srv_price;
+        $data['tax_price']=$tax_price;
+        $data['is_print']=$is_print;
+         return  $this->json_encode(1,$data);
+        // return view('waiter/reckoning')->with("lang",$this->lang)->with("enomination",$enomination)
+        //     ->with('desk_sn',$desk_sn)->with(['total_price'=>$total_price,'discount_price'=>$discount_price,'last_price'=>$last_price])
+        //     ->with(['srv_price'=>$srv_price,'tax_price'=>$tax_price])->with("is_print",$is_print);
+     }
     //接口注册，暂时不写
     public function register(Request $request) {
          // $userID = 'admin3';
@@ -201,49 +308,49 @@ class TableController extends Controller
     }
 
     //获取餐厅区域桌位信息
-    public function desk_info()
-    {
-        // echo 123;die;
-        $p_id = session('partner_id');
-        //如果session过期就跳回登录页
-        if(empty($p_id)){
-            return redirect('waiter/index?lang='.$this->lang);
-        }
-        if($p_id){
-            $areainfos = FoodArea::where('partner_id',$p_id)->get()->toArray();
-            $deskinfos = DB::table('food_area_desk')->join('food_desk_state', function($join)  
-            {  
-                $join->on('food_area_desk.desk_state', '=', 'food_desk_state.id');  
-            })->select('*')  
-              ->where('partner_id',$p_id)                 
-              ->orderBy('food_area_desk.desk_sn', 'asc')  
-              ->get()->toArray();   
-        }
-        $deskarr = [];
-        foreach ($deskinfos as $key => $deskinfo) {
-            $ordertemp = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)
-                         ->where('order_id',0)->first();
-            if(!empty($ordertemp)){
-                if($deskinfo->desk_state!=3){
-                   DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>3]);
-                }
-            }
-            else{
-                if($deskinfo->desk_state==3){
-                    DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>1]);
-                }
-            }
-            $deskarr[$key]['desk_sn'] = $deskinfo->desk_sn;
-            $deskarr[$key]['state_name'] = $deskinfo->state_name;
-            $deskarr[$key]['state_name_en'] = $deskinfo->state_name_en;
-            $deskarr[$key]['state_name_vi'] = $deskinfo->state_name_vi;
-            $deskarr[$key]['desk_state'] = $deskinfo->desk_state;
-            $deskarr[$key]['area_id'] = $deskinfo->area_id;
-        }
-        return view('waiter/table')->with('areainfos',$areainfos)->with('suffix',$this->suffix)
-        ->with('deskinfos',$deskarr)->with('lang',$this->lang);
+    // public function desk_info()
+    // {
+    //     // echo 123;die;
+    //     $p_id = session('partner_id');
+    //     //如果session过期就跳回登录页
+    //     if(empty($p_id)){
+    //         return redirect('waiter/index?lang='.$this->lang);
+    //     }
+    //     if($p_id){
+    //         $areainfos = FoodArea::where('partner_id',$p_id)->get()->toArray();
+    //         $deskinfos = DB::table('food_area_desk')->join('food_desk_state', function($join)  
+    //         {  
+    //             $join->on('food_area_desk.desk_state', '=', 'food_desk_state.id');  
+    //         })->select('*')  
+    //           ->where('partner_id',$p_id)                 
+    //           ->orderBy('food_area_desk.desk_sn', 'asc')  
+    //           ->get()->toArray();   
+    //     }
+    //     $deskarr = [];
+    //     foreach ($deskinfos as $key => $deskinfo) {
+    //         $ordertemp = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)
+    //                      ->where('order_id',0)->first();
+    //         if(!empty($ordertemp)){
+    //             if($deskinfo->desk_state!=3){
+    //                DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>3]);
+    //             }
+    //         }
+    //         else{
+    //             if($deskinfo->desk_state==3){
+    //                 DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>1]);
+    //             }
+    //         }
+    //         $deskarr[$key]['desk_sn'] = $deskinfo->desk_sn;
+    //         $deskarr[$key]['state_name'] = $deskinfo->state_name;
+    //         $deskarr[$key]['state_name_en'] = $deskinfo->state_name_en;
+    //         $deskarr[$key]['state_name_vi'] = $deskinfo->state_name_vi;
+    //         $deskarr[$key]['desk_state'] = $deskinfo->desk_state;
+    //         $deskarr[$key]['area_id'] = $deskinfo->area_id;
+    //     }
+    //     return view('waiter/table')->with('areainfos',$areainfos)->with('suffix',$this->suffix)
+    //     ->with('deskinfos',$deskarr)->with('lang',$this->lang);
                                     
-    }           
+    // }           
 
     //查询该餐厅所有的菜品分类和菜品
     public function food_info()
@@ -435,47 +542,47 @@ class TableController extends Controller
     }
 
     //未结账页需要获取的数据
-    public function non_checkout()
-    {
-        $p_id = session('partner_id');
-        if(empty($p_id)){
-            return redirect('waiter/index?lang='.$this->lang);
-        }
-        $desk_sn = $_GET['desk_sn'];
-        $enomination = 0;
-        $enomination = $_GET['price']; //代金券面额
-        $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();
-        $order_temp = DB::table('order_temp')->where('partner_id',$p_id)
-                                             ->where('desk_sn',$desk_sn)
-                                             ->where('order_id',0)->get();
-        $pinfo = Partner::find($p_id);
-        $total_price = 0;  //原总价
-        foreach($order_temp as $v){
-            $total_price =  $v->price * $v->number + $total_price;
-        }
-        $srv_price = round($total_price * $pinfo->fee_srv); //服务费
-        $tax_price = round($total_price * $pinfo->fee_tax); //税费
-        $discount_price = round($total_price * (1 - $pinfo->discount));    //打折要减去的价格
-        if($total_price-$discount_price+$srv_price+$tax_price>=$enomination){ //如果打折后价格大于代金券的价格
-            $last_price = round($total_price - $discount_price + $srv_price + $tax_price - $enomination);    //最终应付价格
-        }
-        else{
-            $last_price = 0;
-        }
-        //检查未结账订单是否已手动打印
-        $orderNewTemp = DB::table('order_temp')->where('partner_id',$p_id)
-                       ->where('desk_sn',$desk_sn)->where('is_print',0)
-                       ->where('order_id',0)->get();
-        if(!empty($orderNewTemp[0])){
-            $is_print = 1; //需要手动打印
-        }
-        else{
-            $is_print = 0; //不需要手动打印
-        }
-        return view('waiter/reckoning')->with("lang",$this->lang)->with("enomination",$enomination)
-            ->with('desk_sn',$desk_sn)->with(['total_price'=>$total_price,'discount_price'=>$discount_price,'last_price'=>$last_price])
-            ->with(['srv_price'=>$srv_price,'tax_price'=>$tax_price])->with("is_print",$is_print);
-    }
+    // public function non_checkout()
+    // {
+    //     $p_id = session('partner_id');
+    //     if(empty($p_id)){
+    //         return redirect('waiter/index?lang='.$this->lang);
+    //     }
+    //     $desk_sn = $_GET['desk_sn'];
+    //     $enomination = 0;
+    //     $enomination = $_GET['price']; //代金券面额
+    //     $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();
+    //     $order_temp = DB::table('order_temp')->where('partner_id',$p_id)
+    //                                          ->where('desk_sn',$desk_sn)
+    //                                          ->where('order_id',0)->get();
+    //     $pinfo = Partner::find($p_id);
+    //     $total_price = 0;  //原总价
+    //     foreach($order_temp as $v){
+    //         $total_price =  $v->price * $v->number + $total_price;
+    //     }
+    //     $srv_price = round($total_price * $pinfo->fee_srv); //服务费
+    //     $tax_price = round($total_price * $pinfo->fee_tax); //税费
+    //     $discount_price = round($total_price * (1 - $pinfo->discount));    //打折要减去的价格
+    //     if($total_price-$discount_price+$srv_price+$tax_price>=$enomination){ //如果打折后价格大于代金券的价格
+    //         $last_price = round($total_price - $discount_price + $srv_price + $tax_price - $enomination);    //最终应付价格
+    //     }
+    //     else{
+    //         $last_price = 0;
+    //     }
+    //     //检查未结账订单是否已手动打印
+    //     $orderNewTemp = DB::table('order_temp')->where('partner_id',$p_id)
+    //                    ->where('desk_sn',$desk_sn)->where('is_print',0)
+    //                    ->where('order_id',0)->get();
+    //     if(!empty($orderNewTemp[0])){
+    //         $is_print = 1; //需要手动打印
+    //     }
+    //     else{
+    //         $is_print = 0; //不需要手动打印
+    //     }
+    //     return view('waiter/reckoning')->with("lang",$this->lang)->with("enomination",$enomination)
+    //         ->with('desk_sn',$desk_sn)->with(['total_price'=>$total_price,'discount_price'=>$discount_price,'last_price'=>$last_price])
+    //         ->with(['srv_price'=>$srv_price,'tax_price'=>$tax_price])->with("is_print",$is_print);
+    // }
 
     //现金支付
     public function cash()

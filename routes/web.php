@@ -77,6 +77,8 @@ Route::any('login', 'Table\TableController@login');
 Route::any('register', 'Table\TableController@register');
 //接口路由
 Route::group(['middleware'=>'logins','prefix' => 'table'],function() {
-            Route::any('room', 'Table\TableController@room');
+            Route::any('room', 'Table\TableController@room');//返回餐厅房间信息
+            Route::any('table', 'Table\TableController@table');//返回房间桌位信息
+            Route::any('order', 'Table\TableController@order');//点击桌号返回订单信息
 });
 
