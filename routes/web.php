@@ -69,6 +69,35 @@ Route::group(['prefix' => 'waiter'], function() {
 });
 
 /**
+ * seafood route
+ */
+Route::group(['prefix' => 'seafood'], function() {
+    Route::any('index', 'Waiter\SeafoodController@index');
+    Route::any('test', 'Waiter\SeafoodController@test');
+    Route::any('order', 'Waiter\SeafoodController@food_info');
+    Route::any('reckoning', 'Waiter\SeafoodController@non_checkout');
+    Route::any('voucher', 'Waiter\SeafoodController@voucher');
+    Route::any('placeorder', 'Waiter\SeafoodController@placeorder_info');
+    Route::any('over', 'Waiter\SeafoodController@place_order');
+    Route::any('coupon', 'Waiter\SeafoodController@coupon');
+    Route::any('cash', 'Waiter\SeafoodController@cash');
+    Route::any('cashpay', 'Waiter\SeafoodController@confirm_payment');
+    Route::any('wechat', 'Waiter\SeafoodController@wechat');
+    Route::any('alipay', 'Waiter\SeafoodController@alipay');
+    Route::any('addroom', 'Waiter\SeafoodController@add_room');
+    Route::any('adddesk', 'Waiter\SeafoodController@add_desk');
+    Route::any('login', 'Waiter\SeafoodController@login_validator');
+    Route::any('empty', 'Waiter\SeafoodController@empty_desk');
+    Route::any('table', 'Waiter\SeafoodController@desk_info');
+    Route::any('menu','Waiter\SeafoodController@menu');
+    Route::any('orderover','Waiter\SeafoodController@orderover');
+    Route::any('discount','Waiter\SeafoodController@discount');
+    Route::any('cancelorder','Waiter\SeafoodController@cancel_order');
+    Route::any('manualprint','Waiter\SeafoodController@manual_print');
+});
+
+
+/**
  * licongmin route
  */
 //登陆

@@ -1,0 +1,910 @@
+<?php
+
+namespace App\Http\Controllers\Foods;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
+
+use App;
+use App\Http\Controllers\Controller;
+use App\Lib\Wechat\Jssdk;
+use App\Lib\Wechat\Pay;
+use App\Lib\Wechat\HttpRequest;
+use App\Lib\Common\Printer;
+use App\Lib\Common\Helper;
+
+use App\Models\Team;
+use App\Models\Coupon;
+use App\Models\Partner;
+use App\Models\Category;
+use App\Models\FoodCategory;
+use App\Models\Foods;
+use App\Models\FoodPackages;
+use App\Models\FoodCoupon;
+use App\Models\FoodUserCoupon;
+use App\Models\FoodComment;
+use App\Models\Order;
+use App\Models\OrderTeam;
+use App\Models\OrderTemp;
+use App\Models\FoodAreaDesk;
+
+class FoodsController extends Controller
+{
+    private $cdn;
+    private $param;
+    private $paramArr;
+    private $suffix;
+    private $partner;
+    private $category;
+    private $isWechat;
+    private $host;
+    private $fileName;
+    private $destPath;
+
+    public function __construct(Request $request)
+    {
+        $this->isWechat = strpos($_SERVER['HTTP_USER_AGENT'], 'MicroMessenger');
+
+        if ($this->isWechat) {
+            $queryStr = $request->path().'?'.http_build_query($request->all()); //'/'.
+            $this->isWechat && $this->middleware('wechatAuth:'.$queryStr);
+        }
+
+        $this->host = $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'] . '/';
+        $this->cdn = "http://www.mofangtour.com/static/";
+
+        $this->param = $request->input('param');
+        $this->paramArr = explode('-', $request->input('param'));
+
+        App::setLocale($this->paramArr[2]);
+        $this->suffix = __('foods.food_language') == 'cn' ? '' : '_'.__('foods.food_language');
+
+        $this->partner  = Team::with('partner')->where(['id'=>$this->paramArr[0]])->first()['partner'];
+        $this->category = Category::where(['id'=>$this->partner['city_id']])->first();
+
+        $timezone = $this->partner->timezone?:'Asia/Bangkok';
+        date_default_timezone_set($timezone);
+
+        $this->fileName = date('dHis', time()).Pay::random(22);
+        $this->destPath = 'images/'.date('Y').'/'.date('m').'/';
+
+    }
+
+
+    public function home()
+    {
+
+        return view('foods.home', [
+            'cdn'       => $this->cdn,
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'param'     => $this->param,
+            'suffix'    => $this->suffix,
+        ]);
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function index(Request $request)
+    {
+        list($teamId, $deskSn, $lang) = $this->paramArr;
+
+        $categorys = FoodCategory::with('foods')->where(['team_id'=>$teamId])->orderBy('display_order', 'desc')->get();
+        foreach ($categorys as $i=>$category) {
+            foreach ($category->foods as $j=>$food) {
+                $categorys[$i]['foods'][$j]['packages'] = FoodPackages::where(['food_id'=>$food->id])->get();
+            }
+        }
+
+        FoodAreaDesk::where([
+            'partner_id'    => $this->partner->id,
+            'desk_sn'       => $this->paramArr[1]
+        ])->update(['desk_state' => 2]);
+        //cache([$this->param => 1], Carbon::now()->addSeconds(86400));
+
+        $coupons = $this->getCouponList(1);
+        //dd($coupons);exit;
+
+        $partnerCoupons = FoodCoupon::where(['partner_id' => $this->partner->id])->get();
+
+        $comments = FoodComment::where(['team_id'=>$this->paramArr[0]])
+            ->orderBy('createtime', 'desc')
+            ->limit(20)
+            ->get();
+
+        return view('foods.index', [
+            'categorys' => $categorys,
+            'coupons'   => $coupons,
+            'partnerCoupons'   => $partnerCoupons,
+            'comments'  => $comments,
+            'cdn'       => $this->cdn,
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'teamId'    => $teamId,
+            'deskSn'    => $deskSn,
+            'param'     => $this->param,
+            'suffix'    => $this->suffix,
+        ]);
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function confirm(Request $request)
+    {
+        list($teamId, $deskSn, $lang) = $this->paramArr;
+        $op = $request->input('op')? $request->input('op') : 'order_temp';
+
+        if ($op == 'payment_choice') {
+
+            $params = [
+                'team_id'   => $this->paramArr[0],
+                'desk_sn'   => $this->paramArr[1],
+                'order_id'  => 0,
+            ];
+            $orderTemp = OrderTemp::where($params)->get();
+
+            if (empty($orderTemp[0])) {
+                return redirect()->route('foods', ['param'=>$this->param]);
+            }
+
+            foreach ($orderTemp as $item) {
+                $key = $item['food_id'].'_'.$item['package_id'];
+                $goods[$key]['id'] = $key;
+                @$goods[$key]['num'] += $item['number'];
+            }
+
+            $params['partner_id'] = $this->partner['id'];
+            $params['partner_title'] = $this->partner['title'];
+
+        } else {
+
+            $params = $request->input('params');
+            $goods  = $request->input('goods');
+        }
+
+        $i = 0;
+        $priceTotal = 0.00;
+        foreach ($goods as $good) {
+            $id  = explode('_', $good['id'])[0];
+            $pid = !empty(explode('_', $good['id'])[1])?explode('_', $good['id'])[1]:0;
+            $foods[$i] = Foods::where(['id'=>$id])->first();
+            $foods[$i]['num'] = $good['num'];
+            $foods[$i]['package'] = FoodPackages::where(['id'=>$pid])->first();
+
+            $price = empty($foods[$i]['package']) ? $foods[$i]['price'] : $foods[$i]['package']['price'];
+            $priceTotal += $good['num'] * $price;
+            $i ++;
+        }
+
+
+        $params['money']    = round($priceTotal * $this->partner->discount);
+        $fee['discount']    = round($priceTotal * (1 - $this->partner->discount));
+        $fee['tax'] = round($priceTotal * $this->partner['fee_tax']);
+        $fee['srv'] = round($priceTotal * $this->partner['fee_srv']);
+
+        $params['money']    = round($params['money'] + $fee['tax'] + $fee['srv']);
+        $params['origin']   = round($params['money'] / $this->category->parities, 2);
+
+
+        $remarks =  explode('@', $this->partner['foods_remark']);
+        switch ($lang) {
+            case 'zh_cn': $remark['view'] = explode('#', $remarks[0]); break;
+            case 'en_us': $remark['view'] = explode('#', $remarks[1]); break;
+            case 'vi'   : $remark['view'] = explode('#', $remarks[2]); break;
+        }
+
+        $remarkLang =  explode('@@@@', $this->partner['pr_lang'])[0];
+        switch ($remarkLang) {
+            case 'zh_cn': $remark['ticket'] = explode('#', $remarks[0]); break;
+            case 'en_us': $remark['ticket'] = explode('#', $remarks[1]); break;
+            case 'vi'   : $remark['ticket'] = explode('#', $remarks[2]); break;
+        }
+
+        $paramsB64 = base64_encode(http_build_query($params));
+        $foodsB64 = base64_encode(json_encode($foods));
+
+
+        $temCoupons = FoodUserCoupon::with('coupon')
+            ->where(['user_id'=>session('user_id'), 'partner_id'=>$this->partner->id, 'order_id'=>0])
+            ->orWhere(['partner_id'=>0])
+            ->orderBy('price', 'desc')
+            ->get();
+
+
+        $myCoupons = [];
+        $i = 0;
+        foreach ($temCoupons as $myCoupon) {
+            if(!empty($myCoupon->coupon)){
+                if($myCoupon->coupon->endtime > time() && $myCoupon->coupon->threshold <= $priceTotal) {
+                    $myCoupons[$i++] = $myCoupon;
+                }
+            }
+        }
+
+        return view('foods.confirm', [
+            'foods' => $foods,
+            'lang'  => $lang,
+            'cate'  => $this->category,
+            'cdn'   => $this->cdn,
+            'fee'   => $fee,
+            'op'    => $op,
+            'priceTotal'=> $priceTotal,
+            'myCoupons' => $myCoupons,
+            'param'     => $this->param,
+            'params'    => $params,
+            'paramsB64' => $paramsB64,
+            'foodsB64'  => $foodsB64,
+            'remark'    => $remark,
+            'suffix'    => $this->suffix,
+            'partner'   => $this->partner,
+            'isWechat'  => $this->isWechat,
+        ]);
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
+     */
+    public function order(Request $request)
+    {
+        $op = $request->input('op');
+        $paramsB64 = $request->input('params');
+        $foodsB64 = $request->input('foods');
+        $coupon = !empty($request->input('coupon')['id']) ? $request->input('coupon') : [
+            'id' => 0,
+            'price' => 0
+        ];
+        $team = $request->input('team');
+
+        parse_str(base64_decode($paramsB64), $params);
+        $foods = json_decode(base64_decode($foodsB64), true);
+
+        switch ($op) {
+
+            case 'order_temp':
+                foreach ($foods as $i=>$food) {
+                    if (empty($food['package']) || empty($food['pack'])) {
+                        $packageId = 0;
+                        $price = $food['price'];
+                    } else {
+                        $packageId = $food['package']['id'];
+                        $price = $food['package']['price'];
+                    }
+                    $orderTemp = [
+                        'team_id'   => $params['team_id'],
+                        'partner_id'=> $params['partner_id'],
+                        'desk_sn'   => $params['desk_sn'],
+                        'food_id'   => $food['id'],
+                        'package_id'=> $packageId,
+                        'number'    => $food['num'],
+                        'price'     => $price,
+                        'create_time' => time(),
+                        'order_id'    => 0,
+                    ];
+                    OrderTemp::create($orderTemp);
+
+                    $orderTeam[$i] = [
+                        'price'     => $price,
+                        'quantity'  => $food['num'],
+                        'package'   => serialize([
+                            'desk_sn'       => $this->paramArr[1],
+                            'title_zh_cn'   => $food['package'] ? $food['title'].' [ '.$food['package']['name'].' ]' : $food['title'],
+                            'title_en_us'   => $food['package'] ? $food['title_en'].' [ '.$food['package']['name_en'].' ]' : $food['title_en'],
+                            'title_vi'      => $food['package'] ? $food['title_vi'].' [ '.$food['package']['name_vi'].' ]' : $food['title_vi'],
+                            'pr_sn'         => $this->getPrSnByCateId($food['cate_id']), // 分店分类打印序号
+                        ])
+                    ];
+                }
+
+                $order['service'] = 'unpaid';
+                $order['remark'] = rtrim($request->input('remark'), '、');
+
+                session(['remark'=>$order['remark']]);
+
+                if (!empty($this->partner->pr_sn_cate)) {
+                    Printer::categoryPrint($this->partner, $order, $orderTeam);
+                }
+                if ($this->partner['scale'] == '0') {
+                    Printer::singlePrint($this->partner, $order, $orderTeam);
+                }
+
+                //Cache::forget($this->param);
+                FoodAreaDesk::where([
+                    'partner_id'    => $this->partner->id,
+                    'desk_sn'       => $this->paramArr[1]
+                ])->update(['desk_state' => 3]);
+
+                $team = Team::where(['team_type'=>'normal'])->orderBy('end_time', 'desc')->limit(5)->get();
+
+                App::setLocale($this->paramArr[2]);
+                return view('foods.done', [
+                    'cdn' => $this->cdn,
+                    'team' => $team,
+                    'param' => $this->param,
+                    'isWechat' => $this->isWechat,
+                ]);
+                break;
+
+            case 'payment_choice':
+
+                $paySwitch = explode('-', $this->partner->pay_switch);
+
+                return view('foods.payment_choice', [
+                    'foodsB64'  => $foodsB64,
+                    'paramsB64' => $paramsB64,
+                    'paySwitch' => $paySwitch,
+                    'params'    => $params,
+                    'coupon'    => $coupon,
+                    'param'     => $this->param,
+                    'cate'      => $this->category,
+                    'isWechat'  => $this->isWechat,
+                ]);
+                break;
+
+            case 'order_pay':
+
+                $params['money']    -= $coupon['price'];
+                $params['origin']   -= round($coupon['price'] / $this->category->parities, 2);
+                $params['money']    -= round($team['price'] * $this->category->parities, 0);
+                $params['origin']   -= $team['price'];
+                $params['cid']       = $team['cid'];
+
+                $orderData = array(
+                    'openid'        => session('openid')?session('openid'):'',
+                    'user_id'       => session('user_id')?session('user_id'):0,
+                    'service'       => 'cash',
+                    'origin'        => $params['origin'],
+                    'money'         => $params['money'],
+                    'create_time'   => time(), //'pay_time' => time(), 微信支付后修改
+                    'team_id'       => $params['team_id'],
+                    'desk_sn'       => $params['desk_sn'],
+                    'partner_id'    => $params['partner_id'],
+                    'bu_type'       => 4,
+                    'coupon'        => $coupon['price'],//$params['coupon_price'],
+                    'cost'          => $team['price'],
+                    'remark'        => session('remark'),
+                );
+                $order = Order::create($orderData);
+                $params['order_id'] = $order->id;
+                foreach ($foods as $i=>$food) {
+
+                    $orderTeamData[$i] = [
+                        'partner_id'    => $params['partner_id'],
+                        'orderid'       => $params['order_id'],
+                        'price'         => $food['package']?$food['package']['price']:$food['price'],
+                        'quantity'      => intval($food['num']),
+                        'create_time'   => time(),
+                        'userid'        => 0,
+                        'productid'     => intval($food['id']),
+                        'package'       => serialize(array(
+                            'bu_ype'        => '扫码点餐-4',
+                            'desk_sn'       => $params['desk_sn'],
+                            'title_zh_cn'   => $food['package'] ? $food['title'].' [ '.$food['package']['name'].' ]' : $food['title'],
+                            'title_en_us'   => $food['package'] ? $food['title_en'].' [ '.$food['package']['name_en'].' ]' : $food['title_en'],
+                            'title_vi'      => $food['package'] ? $food['title_vi'].' [ '.$food['package']['name_vi'].' ]' : $food['title_vi'],
+                            'pr_sn'         => $this->getPrSnByCateId($food['cate_id']), // 分店 分类打印 标记
+                        ))
+                    ];
+
+                    $orderTeam = OrderTeam::create($orderTeamData[$i]);
+                }
+                $params['quantity'] = $i+1;
+                $params['order_time'] = $order->create_time;
+                $params['service'] = $request->input('radio');
+
+                $filter = [
+                    'team_id'   => $this->paramArr[0],
+                    'desk_sn'   => $this->paramArr[1],
+                    'order_id'  => 0,
+                ];
+                OrderTemp::where($filter)->update(['order_id'=>$params['order_id']]);
+
+                FoodUserCoupon::where(['id'=>$coupon['id']])->update(['order_id'=>$params['order_id']]);
+
+                $couponData = array(
+                    'ip' => $request->getClientIp(),
+                    'consume_time' => time(),
+                    'consume' => 'Y',
+                );
+                Coupon::where(['id' => $team['cid']])->update($couponData);
+
+                return redirect()->route('foods.pay', [
+                    'param'     => $this->param,
+                    'params'    => base64_encode(http_build_query($params)),
+                ]);
+                break;
+
+            default:
+        }
+
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View
+     */
+    public function pay(Request $request)
+    {
+        $paramsB64 = $request->input('params');
+        parse_str(base64_decode($paramsB64), $params);
+
+        $orderNo = 'fo-' . $params['order_id'] . '-' . $params['quantity'] . '-' . substr(time(), 6, 9);
+        Order::where(['id'=>$params['order_id']])->update(['pay_id'=>$orderNo]);
+
+
+        switch ($params['service']) {
+
+            case 'alipay': break;
+
+            case 'wechat':
+
+                $package    = [
+                    'appid'             => config('wechat.app_id'),
+                    'mch_id'            => config('wechat.mch_id'),
+                    'nonce_str'         => pay::random(32),
+                    'body'              => $params['partner_title'],
+                    'out_trade_no'      => $orderNo,
+                    'total_fee'         => intval($params['origin'] * 100),
+                    'spbill_create_ip'  => $request->getClientIp(),
+                    'notify_url'        => config('wechat.notify_url'),
+                    'trade_type'        => 'JSAPI',
+                    'openid'            => session('openid'),
+                ];
+                $package['sign'] = Pay::sign($package);
+                $xml = pay::arrayToXml($package);
+                $unifiedorderRes = Pay::unifiedOrder($xml); //$this->unifiedOrder($package);
+                $unifiedorderRes['result_code'] == 'FAIL' && die($unifiedorderRes['err_code_des']);
+                $wOpt = [
+                    'appId'         => config('wechat.app_id'),
+                    'timeStamp'     => time(),
+                    'nonceStr'      => Pay::random(32),
+                    'package'       => 'prepay_id='.$unifiedorderRes['prepay_id'],
+                    'signType'      => 'MD5',
+                ];
+                $wOpt['paySign']    = Pay::sign($wOpt);
+                $signPackage = $this->getSignPackage(
+                    config('wechat.app_id'),
+                    config('wechat.app_secret')
+                );
+
+                $params1 = base64_encode(http_build_query($params));
+                $successUrl = $this->host . 'foods/done?param=' . $this->param . '&params=' . $params1;
+
+                return view('foods.pay', [
+                    'param'         => $this->param,
+                    'cid'           => $params['cid'],
+                    'wOpt'          => $wOpt,
+                    'signPackage'   => $signPackage,
+                    'successUrl'    => $successUrl,
+                ]);
+                break;
+
+
+            case 'cash':
+
+                if ($this->partner['scale'] == '0') {
+                    $orderData = array(
+                        'state'     => 'pay',
+                        'pay_time'  => time(),
+                    );
+
+                } else {
+                    $orderData = array(
+                        'confirm_print' => '0',
+                    );
+                }
+
+                Order::where(['id'=>$params['order_id']])->update($orderData);
+
+                $order = Order::where(['id' => $params['order_id']])->first();
+                $order['service'] = 'cash';
+                $orderTeam = OrderTeam::where(['orderid' => $params['order_id']])->get();
+                if (!empty($this->partner['pr_sn_cate'])) {
+                    Printer::categoryPrint($this->partner, $order, $orderTeam); // ----------- ???
+                }
+                Printer::singlePrint($this->partner, $order, $orderTeam); // ----------- ???
+
+                return redirect()->route('foods.done', [
+                    'param' => $this->param,
+                    'params' => base64_encode(http_build_query($params)),
+                ]);
+                break;
+
+            default:
+        }
+
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function done(Request $request)
+    {
+        $paramsB64 = $request->input('params');
+        parse_str(base64_decode($paramsB64), $params);
+        $team = Team::where(['team_type'=>'normal'])->orderBy('end_time', 'desc')->limit(10)->get();
+
+        //dd($params, $this->category);
+        return view('foods.done2', [
+            'team'      => $team,
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'param'     => $this->param,
+            'params'    => $params,
+            'isWechat'  => $this->isWechat,
+            'cdn'       => $this->cdn,
+        ]);
+    }
+
+
+    /**
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function myOrder(Request $request)
+    {
+        $openId = session('openid');
+
+        $cid = $request->input('cid');
+        !empty($cid) && Coupon::where(['id' => $cid])->update(['consume' => 'N']);
+
+
+        $orders = Order::where(['openid'=>$openId])
+            ->orderBy('create_time', 'desc')
+            ->paginate(20);
+
+
+        return view('foods.my_order', [
+            'orders'    => $orders,
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'param'     => $this->param,
+            'isWechat'  => $this->isWechat,
+            'cdn'       => $this->cdn,
+        ]);
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function myOrderDetail(Request $request)
+    {
+
+        $orderId = $request->input('order_id');
+        $order = Order::where(['id'=>$orderId])->first();
+        $orderTeam = OrderTeam::where(['orderid'=>$orderId])->get();
+        //dd($orderTeam);
+
+        foreach ($orderTeam as $i=>$ot) {
+            $orderTeam[$i]['detail'] = @unserialize($ot['package']);
+        }
+
+        $coupon = FoodUserCoupon::where(['order_id' => $orderId])->first();
+
+        //dd($this->partner->discount);
+
+        return view('foods.my_order_detail', [
+            'orderTeam' => $orderTeam,
+            'order'     => $order,
+            'coupon'    => $coupon,
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'param'     => $this->param,
+            'lang'      => $this->paramArr[2],
+            'isWechat'  => $this->isWechat,
+        ]);
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Http\RedirectResponse|\Illuminate\View\View|\think\response\View
+     */
+    public function comment(Request $request)
+    {
+        $orderId = $request->input('order_id');
+        $level_1 = $request->input('level_1')?:0;
+        $_token = $request->input('_token');
+
+        if (isset($_token) && $_token == csrf_token()) {
+            $comment = array(
+                'openid'        => session('openid'),
+                'nickname'      => urlencode(session('nickname')),
+                'team_id'       => $this->paramArr[0],
+                'orderid'       => $orderId,
+                'content'       => $request->input('content'),
+                'level_1'       => $level_1,
+                'headimgurl'    => session('headimgurl'),
+                'createtime'    => time(),
+            );
+            $file = $request->file('thumb');
+            $comment['thumb'] = $file ? $this->uploadFile($file, $this->fileName, $this->destPath) : null;
+
+            FoodComment::create($comment);
+
+            Order::where(['id' => $comment['orderid']])
+                ->update(['comment_time' => $comment['createtime']]);
+
+            return redirect()->route('foods.myOrder', [
+                'param' => $this->param,
+            ]);
+        }
+
+        return view('foods.comment', [
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'param'     => $this->param,
+            'orderId'   => $orderId,
+            'level_1'   => $level_1,
+            'isWechat'  => $this->isWechat,
+        ]);
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function coupon(Request $request)
+    {
+        $coupons = $this->getCouponList();
+
+        return view('foods.coupon', [
+            'coupons'   => $coupons,
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'param'     => $this->param,
+            'lang'      => $this->paramArr[2],
+            'isWechat'  => $this->isWechat,
+        ]);
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function couponDetail(Request $request)
+    {
+        $id = intval($request->input('id'));
+        $coupon = $this->couponRceive($id)['coupon'];
+
+        return view('foods.coupon_detail', [
+            'coupon'    => $coupon,
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'param'     => $this->param,
+            'lang'      => $this->paramArr[2],
+            'isWechat'  => $this->isWechat,
+        ]);
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
+    public function couponShare(Request $request)
+    {
+
+        $_token = $request->input('_token');
+        if (!empty($_token) && $_token == csrf_token()) {
+            $couponId = $request->input('coupon_id');
+            if ($couponId) {
+                $userCoupon = $this->couponRceive($couponId)['userCoupon'];
+            } else {
+                $userCoupon = ['id' => false];
+            }
+            return response()->json($userCoupon);
+        }
+
+        $coupon = FoodCoupon::where('total', '>', 0)
+            ->where('endtime', '>', time())
+            ->where(['type'=>1])
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $signPackage = $this->getSignPackage(
+            config('wechat.app_id'),
+            config('wechat.app_secret')
+        );
+
+        return view('foods.coupon_share', [
+            'coupon'    => $coupon,
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'param'     => $this->param,
+            'lang'      => $this->paramArr[2],
+            'isWechat'  => $this->isWechat,
+            'signPackage'  => $signPackage,
+        ]);
+    }
+
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Http\JsonResponse|\Illuminate\View\View
+     */
+    public function team(Request $request)
+    {
+        $_token = $request->input('_token');
+        $op = $request->input('op');
+        if (!empty($_token) && $_token == csrf_token()) {
+            $id = $request->input('code');
+            $res = Helper::voucher($id, $op, $request->getClientIp());
+
+            return response()->json($res);
+        }
+
+        return view('foods.team', [
+            'partner'   => $this->partner,
+            'cate'      => $this->category,
+            'cdn'       => $this->cdn,
+            'param'     => $this->param,
+            'lang'      => $this->paramArr[2],
+            'isWechat'  => $this->isWechat,
+        ]);
+    }
+
+
+    /**
+     * @param $couponId
+     * @return $this|\Illuminate\Database\Eloquent\Model|null|static
+     */
+    public function couponRceive($couponId)
+    {
+        $coupon = FoodCoupon::where(['id' => $couponId])->first();
+
+        if ($coupon->total > 0) {
+
+            FoodCoupon::where(['id' => $couponId])->decrement('total');
+
+            $filter = [
+                'user_id' => session('user_id'),
+                'coupon_id' => $couponId,
+                'partner_id' => $coupon['partner_id'] //$this->partner->id,
+            ];
+            $coupon1 = FoodUserCoupon::where($filter)->first();
+
+            if (empty($coupon1)) {
+                $filter['price'] = $coupon->price;
+                $coupon1 = FoodUserCoupon::create($filter);
+            }
+
+        } else {
+            $coupon1 = ['code'=>0];
+        }
+
+        return ['coupon'=>$coupon , 'userCoupon'=>$coupon1];
+    }
+
+
+    /**
+     * @return array
+     */
+    public function getCouponList($n = 1000)
+    {
+        $userCoupons = FoodUserCoupon::where(['user_id'=>session('user_id')])->get();
+
+        $ids = [];
+        foreach ($userCoupons as $userCoupon) {
+            $ids[] = $userCoupon['coupon_id'];
+        }
+
+        $coupons = FoodCoupon::where(['type'=>0])
+            ->where('total', '>', 0)
+            ->where('endtime', '>', time())
+            ->whereNotIn('id', $ids)
+            ->orderBy('price', 'desc')
+            ->orderBy('createtime', 'desc')
+            ->limit($n)
+            ->get();
+
+        return $coupons;
+    }
+
+
+    /**
+     * @return array
+     */
+    public function getSignPackage($appId, $appSecret, $url = null)
+    {
+        return (new Jssdk([
+            'app_id'     => $appId,
+            'app_secret' => $appSecret,
+        ]))->getSignPackage($url);
+    }
+
+
+    /**
+     * @param $cateId
+     * @return mixed
+     */
+    public function getPrSnByCateId($cateId)
+    {
+        $prSnSer = FoodCategory::where(['id'=>$cateId])->first()['pr_sn'];
+        $prSnArr = @unserialize($prSnSer);
+        $prSn = $prSnArr ? @$prSnArr['p'.$this->partner->id] : $prSnSer;
+        //dd($prSnSer, $prSnArr, $prSn);
+        return $prSn;
+    }
+
+
+    /**
+     * @param $file
+     * @param $name
+     * @param $destPath
+     * @return string
+     */
+    public function uploadFile($file, $name, $destPath){
+
+        $data = [
+            'fileName'      => $file->getClientOriginalName(),
+            'fileExt'       => $file->getClientOriginalExtension(),
+            'fileRealPath'  => $file->getRealPath(),
+            'fileSize'      => $file->getSize(),
+            'fileMimeType'  => $file->getMimeType(),
+        ];
+
+        $fileName = $name.'.'.$data['fileExt'];//'.jpg';
+        !file_exists($destPath) && mkdir($destPath, 0755, true);
+        file_exists($fileName)  && unlink($fileName);
+        $file->move($destPath, $fileName); // $file->getClientOriginalName()
+        return $destPath.$fileName;
+    }
+
+
+    /**
+     * @param $filepathname
+     */
+    private function compress($filepathname)
+    {
+        $width = 100;          // 设置最大宽高
+        $height = 150;
+        // header('Content-Type: image/jpeg'); // Content type
+        list($width_orig, $height_orig) = getimagesize($filepathname); // 获取新尺寸
+        $ratio_orig = $width_orig/$height_orig;
+        if ($width/$height > $ratio_orig) {
+            $width = $height*$ratio_orig;
+        }
+        else {
+            $height = $width/$ratio_orig;
+        }
+        // 重新取样
+        $image_p = imagecreatetruecolor($width, $height);
+        $image = imagecreatefromjpeg($filepathname);
+        imagecopyresampled($image_p, $image, 0, 0, 0, 0, $width, $height, $width_orig, $height_orig);
+        // 输出替换源文件
+        imagejpeg($image_p,$filepathname);
+        imagedestroy($image);
+    }
+
+
+    /**
+     * 判断桌位状态 空闲 或有未结算
+     * @param $partnerId 商户ID
+     * @param $deskSn 桌号
+     * @return \Illuminate\Database\Eloquent\Model|null|static 返回 null：空闲，not null： 未结算
+     */
+    public function getDeskStatus($partnerId, $deskSn)
+    {
+        return OrderTeam::where([
+            'partner_id'    => $partnerId,
+            'desk_sn'       => $deskSn,
+            'order_id'      => 0
+        ])->first();
+    }
+
+}
