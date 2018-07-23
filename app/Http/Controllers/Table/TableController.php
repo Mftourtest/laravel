@@ -170,6 +170,11 @@ class TableController extends Controller
         //     ->with('desk_sn',$desk_sn)->with(['total_price'=>$total_price,'discount_price'=>$discount_price,'last_price'=>$last_price])
         //     ->with(['srv_price'=>$srv_price,'tax_price'=>$tax_price])->with("is_print",$is_print);
      }
+     //打印厨房下单
+     public function print_order(Request $request) {
+            echo "打印厨房下单";
+
+     }
     //接口注册，暂时不写
     public function register(Request $request) {
          // $userID = 'admin3';
