@@ -48,9 +48,48 @@ class TableController extends Controller
         $rooms = DB::table('food_area')->where("partner_id",$partner_id)->get()->toArray();
         // echo "<pre>";
         // var_dump($rooms);die;
-        $arr = [];
-        if($rooms) {
-            return  $this->json_encode(1,$rooms);
+        //返回桌面信息
+            $deskinfos = DB::table('food_area_desk')->join('food_desk_state', function($join)  
+            {  
+                $join->on('food_area_desk.desk_state', '=', 'food_desk_state.id');  
+            })->select('*')  
+              ->where('partner_id',$partner_id)                 
+              ->orderBy('food_area_desk.desk_sn', 'asc')  
+              ->get()->toArray();   
+       
+     
+            $deskarr = [];
+            foreach ($deskinfos as $key => $deskinfo) {
+                $ordertemp = DB::table('order_temp')->where('partner_id',$partner_id)->where('desk_sn',$deskinfo->desk_sn)
+                             ->where('order_id',0)->first();
+                if(!empty($ordertemp)){
+                    if($deskinfo->desk_state!=3){
+                       DB::table('food_area_desk')->where('partner_id',$partner_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>3]);
+                    }
+                }
+                else{
+                    if($deskinfo->desk_state==3){
+                        DB::table('food_area_desk')->where('partner_id',$partner_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>1]);
+                    }
+                }
+                $deskarr[$key]['desk_sn'] = $deskinfo->desk_sn;
+                $deskarr[$key]['state_name'] = $deskinfo->state_name;
+                $deskarr[$key]['state_name_en'] = $deskinfo->state_name_en;
+                $deskarr[$key]['state_name_vi'] = $deskinfo->state_name_vi;
+                $deskarr[$key]['desk_state'] = $deskinfo->desk_state;
+                $deskarr[$key]['area_id'] = $deskinfo->area_id;
+            }
+          //   $
+          // return  $this->json_encode(1,$deskarr);
+        
+        //返回桌面信息
+        $info = [];
+        $info['room'] = $rooms;
+        $info['desk'] = $deskarr;
+
+        // $arr = [];
+        if($info) {
+            return  $this->json_encode(1,$info);
                 // $arr['code']=1;
                 // $arr['msg']="查询成功";
                 // $arr['data'] = $rooms;
@@ -70,12 +109,6 @@ class TableController extends Controller
         //通过token查询出来用户id
         $token = $request->input("token");
         $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
-        //如果session过期就跳回登录页
-        // if(empty($p_id)){
-        //     return redirect('waiter/index?lang='.$this->lang);
-        // }
-        // if($p_id){
-            // $areainfos = FoodArea::where('partner_id',$p_id)->get()->toArray();
             $deskinfos = DB::table('food_area_desk')->join('food_desk_state', function($join)  
             {  
                 $join->on('food_area_desk.desk_state', '=', 'food_desk_state.id');  
@@ -83,9 +116,8 @@ class TableController extends Controller
               ->where('partner_id',$p_id)                 
               ->orderBy('food_area_desk.desk_sn', 'asc')  
               ->get()->toArray();   
-        // }
-        // dump($deskinfos);die;
-        if($deskinfos) {
+       
+     
             $deskarr = [];
             foreach ($deskinfos as $key => $deskinfo) {
                 $ordertemp = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)
@@ -108,10 +140,6 @@ class TableController extends Controller
                 $deskarr[$key]['area_id'] = $deskinfo->area_id;
             }
           return  $this->json_encode(1,$deskarr);
-        }else{
-          return  $this->json_encode(0,"查询失败");
-
-        }
         // dump($deskarr);
         // return view('waiter/table')->with('areainfos',$areainfos)->with('suffix',$this->suffix)
         // ->with('deskinfos',$deskarr)->with('lang',$this->lang);
@@ -169,11 +197,6 @@ class TableController extends Controller
         // return view('waiter/reckoning')->with("lang",$this->lang)->with("enomination",$enomination)
         //     ->with('desk_sn',$desk_sn)->with(['total_price'=>$total_price,'discount_price'=>$discount_price,'last_price'=>$last_price])
         //     ->with(['srv_price'=>$srv_price,'tax_price'=>$tax_price])->with("is_print",$is_print);
-     }
-     //打印厨房下单
-     public function print_order(Request $request) {
-            echo "打印厨房下单";
-
      }
     //接口注册，暂时不写
     public function register(Request $request) {

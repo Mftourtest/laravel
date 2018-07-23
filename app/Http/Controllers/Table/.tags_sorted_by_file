@@ -1,0 +1,212 @@
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_PROGRAM_VERSION	5.8	//
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+TableController	TableController.php	/^class TableController extends Controller$/;"	c
+__construct	TableController.php	/^    public function __construct(){$/;"	f
+admininfo	TableController.php	/^                $admininfo = PartnerAdmin::where('account',$input['account'])->first(); \/\/查询数据库用户名是否存在$/;"	v
+allnum	TableController.php	/^                $allnum = $good['num'] + $allnum;$/;"	v
+allnum	TableController.php	/^        $allnum = 0;$/;"	v
+allprice	TableController.php	/^                $allprice = $good['price']*$good['num'] + $allprice;$/;"	v
+allprice	TableController.php	/^        $allprice = 0;$/;"	v
+areainfo	TableController.php	/^        $areainfo = DB::table('food_area')->where('partner_id',$p_id)->first();$/;"	v
+areainfos	TableController.php	/^            \/\/ $areainfos = FoodArea::where('partner_id',$p_id)->get()->toArray();$/;"	v
+areainfos	TableController.php	/^    \/\/         $areainfos = FoodArea::where('partner_id',$p_id)->get()->toArray();$/;"	v
+arr	TableController.php	/^                $arr = explode('_',$good['id']); \/\/下滑线两端字符取值$/;"	v
+arr	TableController.php	/^        $arr = $this->objectToArray($cateinfo); \/\/将对象转为数组$/;"	v
+arr	TableController.php	/^        $arr = DB::table('coupon')->where('id',$coupon_id)->first();$/;"	v
+arr	TableController.php	/^        $arr = [];$/;"	v
+brr	TableController.php	/^            $brr = $this->objectToArray($categorys[$i]);$/;"	v
+brr	TableController.php	/^        $brr = [];$/;"	v
+cancel_order	TableController.php	/^    public function cancel_order()$/;"	f
+cash	TableController.php	/^    public function cash()$/;"	f
+categorys	TableController.php	/^        $categorys = [];$/;"	v
+cateinfo	TableController.php	/^        $cateinfo = DB::table('food_cate')->where('partner_id',$p_id)->orderBy('display_order','desc')->get()->toArray();$/;"	v
+cnt	TableController.php	/^        \/\/ $cnt = $rst2->rowCount();$/;"	v
+confirm_payment	TableController.php	/^    public function confirm_payment()$/;"	f
+cookies	TableController.php	/^    \/\/     $cookies = $request->cookie();$/;"	v
+coupon	TableController.php	/^        $coupon = $_GET['price'];$/;"	v
+coupon	TableController.php	/^    public function coupon()$/;"	f
+coupon_id	TableController.php	/^        $coupon_id = Input::get('coupon_id');$/;"	v
+coupon_info	TableController.php	/^        $coupon_info = $this->objectToArray($arr);$/;"	v
+data	TableController.php	/^        $data = DB::table('partner_admin')->where(['account'=>$username,"password"=>$userpwd])->get()->toArray();$/;"	v
+data	TableController.php	/^        $data = [];$/;"	v
+data	TableController.php	/^        $data = array();$/;"	v
+data	TableController.php	/^        \/\/         $data = $this->db->query($sql);$/;"	v
+data	TableController.php	/^     \/\/ $data=$this->db->fetchRow("select userID,userName,userTel,url from userinfo where userID='{$userID}' and userPwd='{$userPwd}'");$/;"	v
+desk_info	TableController.php	/^    \/\/ public function desk_info()$/;"	f
+desk_sn	TableController.php	/^        $desk_sn = $_GET['desk_sn'];$/;"	v
+desk_sn	TableController.php	/^        $desk_sn = $input['desk_sn'];$/;"	v
+desk_sn	TableController.php	/^        $desk_sn = $request->input("desk_sn");$/;"	v
+desk_sn	TableController.php	/^        \/\/ $desk_sn = $_GET['desk_sn'];$/;"	v
+desk_sn	TableController.php	/^    \/\/     $desk_sn = $_GET['desk_sn'];$/;"	v
+deskarr	TableController.php	/^            $deskarr = [];$/;"	v
+deskarr	TableController.php	/^    \/\/     $deskarr = [];$/;"	v
+deskinfo	TableController.php	/^        $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();$/;"	v
+deskinfo	TableController.php	/^    \/\/     $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();$/;"	v
+deskinfos	TableController.php	/^            $deskinfos = DB::table('food_area_desk')->join('food_desk_state', function($join)  $/;"	v
+deskinfos	TableController.php	/^    \/\/         $deskinfos = DB::table('food_area_desk')->join('food_desk_state', function($join)  $/;"	v
+discount	TableController.php	/^    public function discount()$/;"	f
+discount_price	TableController.php	/^        $discount_price = round($total_price * (1 - $pinfo->discount));    \/\/打折要减去的价格$/;"	v
+discount_price	TableController.php	/^    \/\/     $discount_price = round($total_price * (1 - $pinfo->discount));    \/\/打折要减去的价格$/;"	v
+e	TableController.php	/^         $e = (array)$e;$/;"	v
+empty_desk	TableController.php	/^    public function empty_desk()$/;"	f
+enomination	TableController.php	/^                 $enomination = $djq[0][0];$/;"	v
+enomination	TableController.php	/^        $enomination = $_GET['price'];$/;"	v
+enomination	TableController.php	/^        $enomination = $request->input("price"); \/\/代金券面额$/;"	v
+enomination	TableController.php	/^        $enomination = 0;$/;"	v
+enomination	TableController.php	/^        \/\/ $enomination = $_GET['price']; \/\/代金券面额$/;"	v
+enomination	TableController.php	/^    \/\/     $enomination = $_GET['price']; \/\/代金券面额$/;"	v
+enomination	TableController.php	/^    \/\/     $enomination = 0;$/;"	v
+expire_time	TableController.php	/^             $expire_time = date("Y-m-d H:i:s",$coupon_info['expire_time']);$/;"	v
+food	TableController.php	/^                $food = DB::table('food')->where('id',$tempinfo->food_id)->first();$/;"	v
+food	TableController.php	/^            $food = DB::table('food')->where('id',$ordertemp->food_id)->first();$/;"	v
+food_info	TableController.php	/^    public function food_info()$/;"	f
+food_num	TableController.php	/^        $food_num = 0; \/\/几道菜$/;"	v
+foodcate	TableController.php	/^                $foodcate = DB::table('food_cate')->where('id',$food->cate_id)->first();$/;"	v
+foodcate	TableController.php	/^            $foodcate = DB::table('food_cate')->where('id',$food->cate_id)->first();$/;"	v
+foodcate	TableController.php	/^            $foodcate = DB::table('food_cate')->where('id',$foodinfo->cate_id)->first();$/;"	v
+foodcate	TableController.php	/^         $foodcate = DB::table('food_cate')->where('partner_id',$p_id)->first();$/;"	v
+fooddata	TableController.php	/^        $fooddata = json_encode($data,JSON_UNESCAPED_UNICODE); \/\/为了js能获取菜单$/;"	v
+foodinfo	TableController.php	/^            $foodinfo = DB::table('food')->where('id',$good_id)->first();$/;"	v
+foodname	TableController.php	/^        $foodname = 'B00';$/;"	v
+good_id	TableController.php	/^                $good_id = $arr[0];$/;"	v
+good_id	TableController.php	/^                $good_id = $good['id'];$/;"	v
+goods	TableController.php	/^        $goods = $input['goods'];$/;"	v
+i	TableController.php	/^                $i = $i+1;$/;"	v
+i	TableController.php	/^            foreach ($ordertemp_ids as $i => $ordertemp_id) {$/;"	v
+i	TableController.php	/^        $i = 0;$/;"	v
+i	TableController.php	/^        foreach ($ordertemps as $i => $ordertemp) {$/;"	v
+i	TableController.php	/^        foreach($cateinfo as $i=>$cate){$/;"	v
+i	TableController.php	/^        foreach($goods as $i=>$good){$/;"	v
+i	TableController.php	/^        foreach($ordertemps as $i=>$ordertemp){$/;"	v
+id	TableController.php	/^        $id = Input::get('voucher_id');$/;"	v
+index	TableController.php	/^    \/\/ public function index(Request $request)$/;"	f
+input	TableController.php	/^        $input = Input::all();$/;"	v
+is_print	TableController.php	/^            $is_print = 0; \/\/不需要手动打印$/;"	v
+is_print	TableController.php	/^            $is_print = 1; \/\/需要手动打印$/;"	v
+is_print	TableController.php	/^    \/\/         $is_print = 0; \/\/不需要手动打印$/;"	v
+is_print	TableController.php	/^    \/\/         $is_print = 1; \/\/需要手动打印$/;"	v
+j	TableController.php	/^                foreach ( $brr as $j => $food) {$/;"	v
+jssuffix	TableController.php	/^        $jssuffix = json_encode($this->suffix,JSON_UNESCAPED_UNICODE);$/;"	v
+k	TableController.php	/^         foreach ($e as $k => $v) {$/;"	v
+key	TableController.php	/^            foreach ($deskinfos as $key => $deskinfo) {$/;"	v
+key	TableController.php	/^        foreach ($ordertemps as $key => $ordertemp) {$/;"	v
+key	TableController.php	/^    \/\/     foreach ($deskinfos as $key => $deskinfo) {$/;"	v
+lang	TableController.php	/^        $this->lang = $_GET['lang'];$/;"	v
+lang	TableController.php	/^    private $lang;$/;"	v
+last_price	TableController.php	/^            $last_price = 0;$/;"	v
+last_price	TableController.php	/^            $last_price = round($total_price - $discount_price + $srv_price + $tax_price - $enomination);    \/\/最终应付价格$/;"	v
+last_price	TableController.php	/^        $last_price = $_GET['last_price'];$/;"	v
+last_price	TableController.php	/^    \/\/         $last_price = 0;$/;"	v
+last_price	TableController.php	/^    \/\/         $last_price = round($total_price - $discount_price + $srv_price + $tax_price - $enomination);    \/\/最终应付价格$/;"	v
+login	TableController.php	/^    public function login(Request $request) {$/;"	f
+login_validator	TableController.php	/^    public function login_validator()$/;"	f
+manual_print	TableController.php	/^    public function manual_print()$/;"	f
+menu	TableController.php	/^    public function menu()$/;"	f
+message	TableController.php	/^            $message = [  $/;"	v
+msg	TableController.php	/^             $msg =  "Find no result";$/;"	v
+msg	TableController.php	/^             $msg =  "The voucher has been used";$/;"	v
+msg	TableController.php	/^             $msg =  "Vouchers null and void"; \/\/信息不全$/;"	v
+msg	TableController.php	/^             $msg = "No result";$/;"	v
+msg	TableController.php	/^             $msg = "The voucher has expired";$/;"	v
+non_checkout	TableController.php	/^    \/\/ public function non_checkout()$/;"	f
+now	TableController.php	/^        $now = time();$/;"	v
+num	TableController.php	/^             $num = DB::table('partner_admin')->where('id', $data[0]->id)->update(['token' => $token]);$/;"	v
+num	TableController.php	/^        \/\/     $num = $this->db->fetchRow($sql);$/;"	v
+objectToArray	TableController.php	/^     public function objectToArray($e)$/;"	f
+old_lang	TableController.php	/^         $old_lang = $this->lang;$/;"	v
+op	TableController.php	/^            $op = 'foods_team'; \/\/团购验券固定数据$/;"	v
+order	TableController.php	/^             $order = DB::select($sql);   $/;"	v
+order	TableController.php	/^     public function order(Request $request) {$/;"	f
+orderNewTemp	TableController.php	/^        $orderNewTemp = DB::table('order_temp')->where('partner_id',$p_id)$/;"	v
+orderNewTemp	TableController.php	/^    \/\/     $orderNewTemp = DB::table('order_temp')->where('partner_id',$p_id)$/;"	v
+orderTeam	TableController.php	/^            $orderTeam = [];$/;"	v
+orderTeam	TableController.php	/^        $orderTeam = [];$/;"	v
+order_id	TableController.php	/^            $order_id = DB::table('order')->insertGetId([$/;"	v
+order_temp	TableController.php	/^        $order_temp = DB::table('order_temp')->where('partner_id',$p_id)$/;"	v
+order_temp	TableController.php	/^    \/\/     $order_temp = DB::table('order_temp')->where('partner_id',$p_id)$/;"	v
+orderover	TableController.php	/^    public function orderover()$/;"	f
+orders	TableController.php	/^             $orders = $this->objectToArray($order);$/;"	v
+ordertemp	TableController.php	/^                $ordertemp = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)$/;"	v
+ordertemp	TableController.php	/^    \/\/         $ordertemp = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)$/;"	v
+ordertemp_ids	TableController.php	/^            $ordertemp_ids = Input::get('ordertemp_id');$/;"	v
+ordertemps	TableController.php	/^        $ordertemps = DB::table('order_temp')$/;"	v
+ordertemps	TableController.php	/^        $ordertemps = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)$/;"	v
+ordertemps	TableController.php	/^        $ordertemps = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->where('order_id',0)->get();$/;"	v
+p_id	TableController.php	/^        $p_id = session('partner_id');$/;"	v
+p_id	TableController.php	/^        $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;$/;"	v
+p_id	TableController.php	/^        \/\/ $p_id = session('id');$/;"	v
+p_id	TableController.php	/^        \/\/ $p_id = session('partner_id');$/;"	v
+p_id	TableController.php	/^    \/\/     $p_id = session('partner_id');$/;"	v
+pack_id	TableController.php	/^                $pack_id = $arr[1];$/;"	v
+pack_id	TableController.php	/^                $pack_id = 0;$/;"	v
+package	TableController.php	/^                    $package = DB::table('food_packages')->where('id',$ordertemp->package_id)->first();         $/;"	v
+package	TableController.php	/^                    $package = DB::table('food_packages')->where('id',$ordertemp->package_id)->first();$/;"	v
+package	TableController.php	/^                    $package = DB::table('food_packages')->where('id',$tempinfo->package_id)->first();$/;"	v
+package	TableController.php	/^                $package = DB::table('food_packages')->where('id',$ordertemp->package_id)->first();$/;"	v
+package	TableController.php	/^                $package = DB::table('food_packages')->where('id',$pack_id)->first();$/;"	v
+packname	TableController.php	/^                 $packname = $orders[0]['packagename'];$/;"	v
+partner	TableController.php	/^        $partner = $this->objectToArray($partner_object);$/;"	v
+partner_id	TableController.php	/^        $partner_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;$/;"	v
+partner_object	TableController.php	/^        $partner_object = DB::table('partner')->where('id',$p_id)->first();$/;"	v
+pinfo	TableController.php	/^                        $pinfo = Partner::find($admininfo->partner_id);$/;"	v
+pinfo	TableController.php	/^        $pinfo = Partner::find($p_id);$/;"	v
+pinfo	TableController.php	/^    \/\/     $pinfo = Partner::find($p_id);$/;"	v
+place_order	TableController.php	/^    public function place_order()$/;"	f
+placeorder_info	TableController.php	/^    public function placeorder_info()$/;"	f
+pr_arr	TableController.php	/^                    $pr_arr = unserialize($foodcate->pr_sn);$/;"	v
+pr_arr	TableController.php	/^                $pr_arr = unserialize($foodcate->pr_sn);$/;"	v
+prr	TableController.php	/^                        $prr = DB::table('food_packages')->where('food_id',$food['id'])->get()->toArray();$/;"	v
+prr	TableController.php	/^        $prr = [];$/;"	v
+psw	TableController.php	/^                    $psw = $admininfo->password;$/;"	v
+register	TableController.php	/^    public function register(Request $request) {$/;"	f
+remark	TableController.php	/^            $remark = $ordertemp->remark;$/;"	v
+res	TableController.php	/^            $res = Helper::voucher($id, $op, $request->getClientIp());$/;"	v
+room	TableController.php	/^    public function room(Request $request) {$/;"	f
+rooms	TableController.php	/^        $rooms = DB::table('food_area')->where("partner_id",$partner_id)->get()->toArray();$/;"	v
+rst2	TableController.php	/^      \/\/ $rst2=$this->db->query("update userinfo set token='{$token}',time_out='{$time_out}' where userID='{$userID}'");$/;"	v
+rules	TableController.php	/^            $rules = [  $/;"	v
+search_foods	TableController.php	/^        \/\/ $search_foods = DB::table('food')->where('team_id',$team_id)->get()->map(function ($value) {return (array)$value;})->toArray();   $/;"	v
+search_foods	TableController.php	/^      $search_foods = DB::table('food')->where('team_id',$team_id)->first();$/;"	v
+sql	TableController.php	/^             $sql = "SELECT c.id,o.id as order_id, pp.packagename,pp.packagenameen, t.title,t.titleen, $/;"	v
+sql	TableController.php	/^        \/\/         $sql = "insert into userInfo (userID,userPwd,userTel) values ('{$userID}','{$userPwd}','{$userTel}')";$/;"	v
+sql	TableController.php	/^        \/\/     $sql = "select count(id) as num from userInfo where userTel='{$userTel}' or userID='{$userID}'";$/;"	v
+srv_price	TableController.php	/^        $srv_price = round($total_price * $pinfo->fee_srv); \/\/服务费$/;"	v
+srv_price	TableController.php	/^    \/\/     $srv_price = round($total_price * $pinfo->fee_srv); \/\/服务费$/;"	v
+suffix	TableController.php	/^            $this->suffix = "";$/;"	v
+suffix	TableController.php	/^            $this->suffix = "_en";$/;"	v
+suffix	TableController.php	/^            $this->suffix = "_vi";$/;"	v
+suffix	TableController.php	/^    private $suffix;$/;"	v
+table	TableController.php	/^    public function table(Request $request) {$/;"	f
+tax_price	TableController.php	/^        $tax_price = round($total_price * $pinfo->fee_tax); \/\/税费$/;"	v
+tax_price	TableController.php	/^    \/\/     $tax_price = round($total_price * $pinfo->fee_tax); \/\/税费$/;"	v
+team_id	TableController.php	/^        $team_id = $foodcate->team_id;$/;"	v
+tempinfo	TableController.php	/^                $tempinfo = DB::table('order_temp')->where('id',$ordertemp_id)->first();$/;"	v
+test	TableController.php	/^    public function test(Request $request)$/;"	f
+time	TableController.php	/^        $time = time();$/;"	v
+time_out	TableController.php	/^        \/\/ $time_out = strtotime("+7 days");$/;"	v
+token	TableController.php	/^        $token = $request->input("token");$/;"	v
+token	TableController.php	/^        $token = $this->setToken();$/;"	v
+total_price	TableController.php	/^            $total_price =  $v->price * $v->number + $total_price;$/;"	v
+total_price	TableController.php	/^        $total_price = 0;  \/\/原总价$/;"	v
+total_price	TableController.php	/^    \/\/         $total_price =  $v->price * $v->number + $total_price;$/;"	v
+total_price	TableController.php	/^    \/\/     $total_price = 0;  \/\/原总价$/;"	v
+update_row	TableController.php	/^                $update_row = DB::table('food_area_desk')$/;"	v
+update_row	TableController.php	/^        $update_row = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['desk_state'=>1]);$/;"	v
+userID	TableController.php	/^         \/\/ $userID = 'admin3';$/;"	v
+userID	TableController.php	/^        \/\/ $userID = isset($_POST['name']) ? $_POST['name'] : '';$/;"	v
+userID	TableController.php	/^        \/\/ $userID=$_POST['userID'];$/;"	v
+userPwd	TableController.php	/^        \/\/ $userPwd = '123456';$/;"	v
+userPwd	TableController.php	/^        \/\/ $userPwd = isset($_POST['password']) ? md5($_POST['password']) : '';$/;"	v
+userPwd	TableController.php	/^        \/\/ $userPwd=$_POST['userPwd'];$/;"	v
+userTel	TableController.php	/^        \/\/ $userTel = '15939956756';$/;"	v
+userTel	TableController.php	/^        \/\/ $userTel = isset($_POST['tel']) ? $_POST['tel']:'';$/;"	v
+username	TableController.php	/^        $username = $request->input("userName");$/;"	v
+userpwd	TableController.php	/^        $userpwd = $request->input("userPwd");$/;"	v
+userpwd	TableController.php	/^        \/\/ $userpwd=md5($userpwd);$/;"	v
+validator	TableController.php	/^            $validator = Validator::make($input,$rules,$message);  $/;"	v
+voucher	TableController.php	/^    public function voucher(Request $request)$/;"	f
+wechat	TableController.php	/^    public function wechat()$/;"	f
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
