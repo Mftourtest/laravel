@@ -261,9 +261,9 @@ class TableController extends Controller
              if($num==1) {
                     session(['username'=>$data[0]->account]);
                     session(['id'=>$data[0]->id]);
-                    return $this->json_encode(2,$data);
+                    return $this->json_encode(2,"登陆成功",$data[0]);
              }else{
-                    return $this->json_encode(3,"未知错误");
+                    return $this->json_encode(3,"未知错误","");
 
              }
 

@@ -16,11 +16,12 @@ class Controller extends BaseController
      * @param  $msg (array  string int) 返回信息
      * @return string
      */
-    public function json_encode($status, $msg)
+    public function json_encode($status, $msg, $data)
     {
         $arr['code']  = $status;
         $arr['msg'] = $msg;
-        $json           = json_encode($arr,JSON_UNESCAPED_UNICODE);
+        $arr['data'] = $data;
+        $json = json_encode($arr,JSON_UNESCAPED_UNICODE);
         return $json;
     }
     //生成token方法代码
