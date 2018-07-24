@@ -146,6 +146,10 @@ class TableController extends Controller
         // return view('waiter/table')->with('areainfos',$areainfos)->with('suffix',$this->suffix)
         // ->with('deskinfos',$deskarr)->with('lang',$this->lang);
     }
+    //桌台-未结账返回结账信息页
+    public function paymoney_info(Request $request) {
+        echo "桌台-未结账返回结账信息页";
+    }
     //点击桌号返回订单信息
      public function order(Request $request) {
           //通过token查询出来用户id
