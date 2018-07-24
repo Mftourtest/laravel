@@ -179,9 +179,9 @@ class TableController extends Controller
        foreach ($order_temp as $k => $v) {
            if($v->pack==1) {
                  $package = DB::table('food_packages')->where('id',$v->package_id)->first();
-                $menu_list[$k]["title"] = $v->title.$package->name;
-                $menu_list[$k]["title_en"] = $v->title_en.$package->name_en;
-                $menu_list[$k]["title_vi"] = $v->title_vi.$package->name_vi;
+                $menu_list[$k]["title"] = $v->title.'('.$package->name.')';
+                $menu_list[$k]["title_en"] = $v->title_en.'('.$package->name_en.')';
+                $menu_list[$k]["title_vi"] = $v->title_vi.'('.$package->name_vi.')';
                  
            }else{
                  $menu_list[$k]["title"] = $v->title;
