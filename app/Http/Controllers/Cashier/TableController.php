@@ -172,18 +172,27 @@ class TableController extends Controller
         }
         //查询临时订单表
           $order_temp = DB::table('order_temp')->leftJoin("food",'food.id', '=', 'order_temp.food_id')->where('order_temp.partner_id',$p_id)->where('order_temp.desk_sn',$desk_sn)->where('order_temp.order_id',0)
-          ->select('order_temp.*', 'food.title', 'food.title_en','food.title_vi','food.thumb')->get();
+          ->select('order_temp.*', 'food.title', 'food.title_en','food.title_vi','food.thumb','food.pack')->get();
+          // dump($order_temp);die;
        //拼接菜单明细数组
        $menu_list = [];
        foreach ($order_temp as $k => $v) {
+           if($v->pack==1) {
+                 $package = DB::table('food_packages')->where('id',$v->package_id)->first();
+                $menu_list[$k]["title"] = $v->title.$package->name;
+                $menu_list[$k]["title_en"] = $v->title_en.$package->name_en;
+                $menu_list[$k]["title_vi"] = $v->title_vi.$package->name_vi;
+                 
+           }else{
+                 $menu_list[$k]["title"] = $v->title;
+                $menu_list[$k]["title_en"] = $v->title_en;
+                $menu_list[$k]["title_vi"] = $v->title_vi;
+           }
            $menu_list[$k]["thumb"] = $v->thumb;
-           $menu_list[$k]["title"] = $v->title;
-           $menu_list[$k]["title_en"] = $v->title_en;
-           $menu_list[$k]["title_vi"] = $v->title_vi;
            $menu_list[$k]["number"] = $v->number;
            $menu_list[$k]["price"] = $v->price*$v->number;
        }
-       // dump($menu_list);die;
+       dump($menu_list);die;
       //拼接各种费用
         //获取总价
         $total_price = 0;  //原总价
