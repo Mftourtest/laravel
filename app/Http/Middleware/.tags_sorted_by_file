@@ -1,0 +1,20 @@
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_PROGRAM_VERSION	5.8	//
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+LoginMiddleWare	LoginMiddleWare.php	/^class LoginMiddleWare$/;"	c
+arr	LoginMiddleWare.php	/^                $arr = [];$/;"	v
+arrb	LoginMiddleWare.php	/^                $arrb = [];$/;"	v
+checkTokensFct	LoginMiddleWare.php	/^    public function checkTokensFct($token)$/;"	f
+handle	LoginMiddleWare.php	/^    public function handle($request, Closure $next)$/;"	f
+new_time_out	LoginMiddleWare.php	/^            \/\/ $new_time_out = time() + 604800;\/\/604800是七天$/;"	v
+p_id	LoginMiddleWare.php	/^        \/\/  $p_id = session('id');$/;"	v
+res	LoginMiddleWare.php	/^        $res= DB::table('partner_admin')->where("token",$token)->get()->toArray();$/;"	v
+res	LoginMiddleWare.php	/^        \/\/ $res = $this->db->fetchRow("select time_out from userinfo where token='{$token}'");$/;"	v
+rooms	LoginMiddleWare.php	/^        \/\/ $rooms = DB::table('food_area')->where("partner_id",$p_id)->get()->toArray();$/;"	v
+token	LoginMiddleWare.php	/^            \/\/ $token = $_GET['token'];$/;"	v
+token	LoginMiddleWare.php	/^            \/\/ $token ='6f329eac42ffbaaee01cc110ddf98bbe27a5b26e';$/;"	v
+token	LoginMiddleWare.php	/^           $token = $request->input("token");$/;"	v
+tokencheck	LoginMiddleWare.php	/^            $tokencheck = $this->checkTokensFct($token);$/;"	v
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/

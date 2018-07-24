@@ -6,6 +6,10 @@
     "type": "project",
     "require": {
         "php": ">=5.6.4",
+<<<<<<< HEAD
+=======
+        "guzzle/http": "v3.8.1",
+>>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
         "guzzlehttp/guzzle": "^6.3",
         "laravel/framework": "5.4.*",
         "laravel/tinker": "~1.0"
