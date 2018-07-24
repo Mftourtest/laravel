@@ -380,48 +380,76 @@ class TableController extends Controller
                                     
     // }           
 
-    //查询该餐厅所有的菜品分类和菜品
-    public function food_info()
+    //点餐-获取所有商户菜单分类和菜和规格
+    public function food_info(Request $request)
     {
-        $p_id = session('partner_id');
-        if(empty($p_id)){
-            return redirect('waiter/index?lang='.$this->lang);
-        }
-        $desk_sn = $_GET['desk_sn'];
+        // echo "这里是所有商户菜单";die;
+        //获取token值
+          $token = $request->input("token");
+        //根据token获取用户的id
+          $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+        // 获取桌位号
+          $desk_sn = $request->input("desk_sn");
+          if(empty($desk_sn)) return $this->json_encode(0,"缺少桌号","");
+        //获取当前用户下所有的菜品种类信息
         $arr = [];
         $cateinfo = DB::table('food_cate')->where('partner_id',$p_id)->orderBy('display_order','desc')->get()->toArray();
         $arr = $this->objectToArray($cateinfo); //将对象转为数组
-        $categorys = [];
-        $data = array();
-        $brr = [];
-        $prr = [];
-        foreach($cateinfo as $i=>$cate){
-            $categorys[$i] =  DB::table('food')->where('cate_id',$cate->id)->orderBy('display_order','desc')->get()->toArray();
-            $brr = $this->objectToArray($categorys[$i]);
-                foreach ( $brr as $j => $food) {
-                    $data[$i][$j]['id'] = $food['id'];
-                    $data[$i][$j]['food_no'] = $food['food_no'];
-                    $data[$i][$j]['title'.$this->suffix] = $food['food_no'].$food['title'.$this->suffix];
-                    $data[$i][$j]['price'] = round($food['price']);
-                    $data[$i][$j]['display_order'] = $food['display_order'];
-                    $data[$i][$j]['pack'] = $food['pack'];
-                    if($food['pack']==1){                 
-                        $prr = DB::table('food_packages')->where('food_id',$food['id'])->get()->toArray();
-                        $data[$i][$j]['packages'] = $this->objectToArray($prr);
+        // dump($arr);die;
+        //根据当前的菜品种类获取所有的菜信息
+        $foods = [];
+        foreach ($arr as $k => $v) {
+            $foods[$k] =  DB::table('food')->where('cate_id',$v['id'])->orderBy('display_order','desc')->get()->toArray();
+            //每次遍历所有的食物获取套餐
+            foreach ($foods[$k] as $kk => $vv) {
+                if($vv->pack==1){                 
+                        $prr = DB::table('food_packages')->where('food_id',$vv->id)->get()->toArray();
+                        // $data[$i][$j]['packages'] = $this->objectToArray($prr);
+                        $foods[$k][$kk]->packs = $prr;
                     }
-                }
+            }
         }
-        $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();
-        if($deskinfo->desk_state!=3){
-            DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['desk_state'=>2]); //点餐中
-        }
-        $fooddata = json_encode($data,JSON_UNESCAPED_UNICODE); //为了js能获取菜单
-        $jssuffix = json_encode($this->suffix,JSON_UNESCAPED_UNICODE);
-        //echo $this->suffix;exit;
-        return view('waiter/order')->with('cateinfo',$arr)->with('data',$data)->with('fooddata',$fooddata)
-                                   ->with('suffix',$this->suffix)->with('jssuffix',$jssuffix)
-                                   ->with('desk_sn',$desk_sn) ->with('lang',$this->lang);
+
+        // dump($foods);die;
+        if(empty($arr)) return $this->json_encode(1,"未查到信息","");
+        $data = [];
+        $data['desk_sn'] =  $desk_sn;
+        $data['food_cate'] = $arr;
+        $data['food'] = $foods;
+        return $this->json_encode(2,"查询成功",$data);
     }
+
+    //     $categorys = [];
+    //     $data = array();
+    //     $brr = [];
+    //     $prr = [];
+    //     foreach($cateinfo as $i=>$cate){
+    //         $categorys[$i] =  DB::table('food')->where('cate_id',$cate->id)->orderBy('display_order','desc')->get()->toArray();
+    //         $brr = $this->objectToArray($categorys[$i]);
+    //             foreach ( $brr as $j => $food) {
+    //                 $data[$i][$j]['id'] = $food['id'];
+    //                 $data[$i][$j]['food_no'] = $food['food_no'];
+    //                 $data[$i][$j]['title'.$this->suffix] = $food['food_no'].$food['title'.$this->suffix];
+    //                 $data[$i][$j]['price'] = round($food['price']);
+    //                 $data[$i][$j]['display_order'] = $food['display_order'];
+    //                 $data[$i][$j]['pack'] = $food['pack'];
+    //                 if($food['pack']==1){                 
+    //                     $prr = DB::table('food_packages')->where('food_id',$food['id'])->get()->toArray();
+    //                     $data[$i][$j]['packages'] = $this->objectToArray($prr);
+    //                 }
+    //             }
+    //     }
+    //     $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();
+    //     if($deskinfo->desk_state!=3){
+    //         DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['desk_state'=>2]); //点餐中
+    //     }
+    //     $fooddata = json_encode($data,JSON_UNESCAPED_UNICODE); //为了js能获取菜单
+    //     $jssuffix = json_encode($this->suffix,JSON_UNESCAPED_UNICODE);
+    //     //echo $this->suffix;exit;
+    //     return view('waiter/order')->with('cateinfo',$arr)->with('data',$data)->with('fooddata',$fooddata)
+    //                                ->with('suffix',$this->suffix)->with('jssuffix',$jssuffix)
+    //                                ->with('desk_sn',$desk_sn) ->with('lang',$this->lang);
+    // }
 
     //服务员将购物车内的菜品显示在下单页
     public function placeorder_info()
