@@ -42,8 +42,9 @@ class TableController extends Controller
     public function room(Request $request) {
         // $p_id = session('id');
         //通过token查询出来用户id
-        $token = $request->input("token");
-        $partner_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+        // $token = $request->input("token");
+        // $partner_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+        $partner_id = $request->input("partner_id");
         // var_dump($partner_id);
         $rooms = DB::table('food_area')->where("partner_id",$partner_id)->get()->toArray();
         // echo "<pre>";
@@ -107,8 +108,9 @@ class TableController extends Controller
          // echo 123;die;
         // $p_id = session('partner_id');
         //通过token查询出来用户id
-        $token = $request->input("token");
-        $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+        // $token = $request->input("token");
+        // $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+         $p_id = $request->input("partner_id");
             $deskinfos = DB::table('food_area_desk')->join('food_desk_state', function($join)  
             {  
                 $join->on('food_area_desk.desk_state', '=', 'food_desk_state.id');  
@@ -385,9 +387,10 @@ class TableController extends Controller
     {
         // echo "这里是所有商户菜单";die;
         //获取token值
-          $token = $request->input("token");
+          // $token = $request->input("token");
         //根据token获取用户的id
-          $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+          // $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+             $p_id = $request->input("partner_id");
         // 获取桌位号
           $desk_sn = $request->input("desk_sn");
           if(empty($desk_sn)) return $this->json_encode(0,"缺少桌号","");
@@ -450,7 +453,34 @@ class TableController extends Controller
     //                                ->with('suffix',$this->suffix)->with('jssuffix',$jssuffix)
     //                                ->with('desk_sn',$desk_sn) ->with('lang',$this->lang);
     // }
+    // 桌台-修改商家优惠
+    public function edit_coupon(Request $request) {
+        // echo 1234;die;
+        //获取token值
+          // $token = $request->input("token");
+        //根据token获取用户的id
+          // $p_id= DB::table('partner_admin')->where("token",$token)->first()->partner_id;
+          $p_id = $request->input("partner_id");
+         // 获取折扣值
+          $discount = $request->input("discount");
+            if(!isset($discount)) return $this->json_encode(0,"缺少折扣值","");
+         //判断获取到的折扣值是否符合0-1之间两位小数的规则
+            if($discount<0 || $discount>1) return $this->json_encode(1,"折扣值不符合规则","");
+            $temp = explode ( '.',$discount);
+            if(sizeof ( $temp ) > 1) {
+                $decimal = end ( $temp );
+                $count = strlen ( $decimal );
+                if($count !=2 ) return $this->json_encode(1,"折扣值不符合规则","");
+            }
+           $res = DB::table('partner')->where('id', $p_id)->update(['discount' => $discount]);
+           if ($res) {
+               return $this->json_encode(3,"修改成功","");
+           }else{
+               return $this->json_encode(2,"修改失败","");
 
+           }
+            
+    }
     //服务员将购物车内的菜品显示在下单页
     public function placeorder_info()
     {

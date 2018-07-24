@@ -111,5 +111,6 @@ Route::group(['middleware'=>'logins','prefix' => 'table'],function() {
             Route::any('order', 'Table\TableController@order');//点击桌号返回订单信息
             Route::any('print', 'Table\TableController@print_order');//打印厨房下单
             Route::any('food_info', 'Table\TableController@food_info');//点餐-获取所有商户菜单分类和菜和规格
+            Route::any('edit_coupon', 'Table\TableController@edit_coupon');//桌台-修改商家优惠
 });
 
