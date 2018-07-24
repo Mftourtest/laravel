@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class FoodAreaDesk extends Model
+{
+    //指定表名
+    protected $table = 'food_area_desk';
+
+    //指定主键
+    protected $primaryKey = 'id';
+
+    public function belongsToDesk()
+    {
+        return $this->belongsTo('App\Model\Food_area', 'area_id', 'id');
+    }
+
+    public function belongsToState()
+    {
+        return $this->belongsTo('App\Model\Food_desk_state', 'desk_state', 'id');
+    }
+}

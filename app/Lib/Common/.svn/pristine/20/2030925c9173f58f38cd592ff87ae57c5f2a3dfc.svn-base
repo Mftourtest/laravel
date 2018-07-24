@@ -1,0 +1,106 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: CH
+ * Date: 2018/5/27
+ * Time: 21:18
+ */
+namespace App\Lib\Common;
+
+use App;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Client;
+
+use App\Models\Coupon;
+use App\Models\Partner;
+use App\Models\Team;
+use App\Models\Order;
+use App\Models\FoodCategory;
+
+class Helper
+{
+    public function __construct()
+    {
+
+    }
+
+    /**
+     * 验券  团购券  代金券
+     * @param $id
+     * @param $op
+     * @param $ip
+     * @return array
+     */
+    public static function voucher($id, $op, $ip)
+    {
+
+        $coupon = Coupon::where(['id' => $id])->first();
+        $partner = Partner::where(['id' => $coupon['partner_id']])->first();
+
+        // 验券 符合
+        if ($coupon['consume'] == 'N' && $coupon['expire_time'] > time()) { //strtotime(date('Y-m-d'))
+
+            // 下单后消券
+            $team = Team::where(['id' => $coupon['team_id']])->first();
+
+            //判断该商家得用商家号比对，具体在team表还是coupon 要进一步看看
+            //if ($team->team_type == $op) { // && $team->id == $this->paramArr[0]
+
+                $res = [
+                    'code'   => $coupon['id'],
+                    'msg'    => __('foods.food_voucher_1').' -￥'.$team->team_price,
+                    'team'   => $team,
+                    'coupon' => $coupon
+                ];
+
+                // 团购项目
+                if ($op == 'foods_team') {
+
+                    // 消券
+                    $couponData = array(
+                        'ip' => $ip,
+                        'consume_time' => time(),
+                        'consume' => 'Y',
+                    );
+                    //Coupon::where(['id' => $id])->update($couponData);
+
+                    // 打印
+                    $res['order'] = Order::where(['id' => $coupon['order_id']])->first();
+                    $res['print'] = Printer::teamPrint($partner, $res['order'], $team);
+                }
+
+            /*} else {
+                $res = [
+                    'code'  => 0,
+                    'msg'   => '券类型错或非此商家',
+                ];
+            }*/
+
+        } else {
+
+            $res = [
+                'code'  => 0,
+                'msg'   => __('foods.food_voucher_2'),
+                'time'  => $coupon['expire_time']
+            ];
+        }
+
+        return $res;
+
+    }
+
+
+    /**
+     * @param $cateId
+     * @return mixed
+     */
+    public function getPrSnByCateId($cateId)
+    {
+        $prSnSer = FoodCategory::where(['id'=>$cateId])->first()['pr_sn'];
+        $prSnArr = @unserialize($prSnSer);
+        $prSn = $prSnArr ? @$prSnArr['p'.$this->partner->id] : $prSnSer;
+        //dd($prSnSer, $prSnArr, $prSn);
+        return $prSn;
+    }
+}

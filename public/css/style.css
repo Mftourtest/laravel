@@ -1,0 +1,45 @@
+/*@font-face {
+    font-family: fzltxhk; !*这里是说明调用来的字体名字*!
+    src: url(fzltxhk.ttf); !*这里是字体文件路径*!  fzltxhk
+}*/
+
+body {padding: 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif
+  /*"微软雅黑"color: white; background-color: #404a59; 62.5% #f0f0f0 font: 16px "Lucida Grande", Helvetica, Arial, sans-serif;*/}
+/*.navbar-inverse {opacity: .9;}*/
+
+[class*="col-xs"]{padding: 0px;}
+
+a, a:hover, a:visited{color: black; text-decoration:none;}
+
+
+
+/*.pagination-sm>li>a, .pagination-sm>li>span, .pagination>.disabled>span,
+.pagination-sm>li:last-child>a, .pagination-sm>li:last-child>span{
+    background-color: #323c48;
+}*/
+
+
+
+
+/*iphone6s & plus 414 992*/
+@media screen and (max-width: 2048px) {
+  .nav2{width: 104px;}
+  .my-tab{width: 33%;}
+}
+
+/*iphone6s 375*/
+@media screen and (max-width: 414px) {
+  .nav2{width: 94px;}
+  .my-tab{width: 18%;}
+}
+
+@media screen and (max-width: 375px) {
+  .nav2{width: 94px;}
+  .my-tab{width: 16%;}
+}
+
+/*iphone5s*/
+@media screen and (max-width: 320px) {
+  .nav2{width: 86px;}
+  .my-tab{width: 14%;}
+}

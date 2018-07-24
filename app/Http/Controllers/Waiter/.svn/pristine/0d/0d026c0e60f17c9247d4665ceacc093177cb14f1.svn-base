@@ -1,0 +1,677 @@
+<?php
+
+namespace App\Http\Controllers\Waiter;
+
+use App;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Cookie\CookieJar;
+use App\Http\Controllers\Controller;
+use DB;
+use Validator;
+use Illuminate\Support\Facades\Input;
+use App\Models\PartnerAdmin;
+use App\Models\Partner;
+use App\Models\FoodArea;
+use App\Models\FoodAreaDesk;
+use App\Lib\Common\Helper;
+use App\Lib\Common\Printer;
+use App\Lib\Common\NewPrinter;
+
+class RestaurantController extends Controller
+{
+    private $lang;
+    private $suffix;
+    public function __construct(){
+        $this->lang = $_GET['lang'];
+        App::setLocale($this->lang);
+        if($this->lang=="zh_cn"){
+            $this->suffix = "";
+        }
+        elseif($this->lang=="en_us"){
+            $this->suffix = "_en";
+        }
+        else{
+            $this->suffix = "_vi";
+        }
+        date_default_timezone_set("Asia/Bangkok"); //系统时间设成泰国时区时间
+        if(empty(session('partner_id'))){
+           return redirect('waiter/index?lang='.$this->lang);
+        }
+    }
+
+    //首页-登录页
+    public function index(Request $request)
+    {
+        $cookies = $request->cookie();
+        return view('waiter/index')->with("lang",$this->lang)->with('cookies',$cookies);
+    }
+
+    //添加账号
+    public function store()
+    {
+        $username = Input::get('account');
+        $password = Input::get('password');
+        if($username && $password){
+            DB::table('partner_admin')->insert(['account' => $username,'password' => $password,'waiter_id' => 2,]);
+        }
+        return redirect('/');
+    }
+
+    //带验证登陆
+    public function login_validator()
+    {
+        //$lang = $_GET['lang'];
+        if($input = Input::all()){
+            //验证提交的数据  
+            $rules = [  
+                'account'=>'required|between:1,20',  
+                'password'=>'required|between:1,50'
+            ];  
+            $message = [  
+                'account.required'=>'account not null！',  
+                'account.between'=>'账号必须在1-20位之间！',  
+                'password.required'=>'password not null！',  
+                'password.between'=>'密码必须在1-50位之间！'
+            ];  
+            $validator = Validator::make($input,$rules,$message);  
+            //表单验证  
+            if($validator->passes()){  
+                //用户验证  
+                $admininfo = PartnerAdmin::where('account',$input['account'])->first(); //查询数据库用户名是否存在
+                if(!$admininfo){  
+                    return back()->with('msg','用户不存在！');  
+                }else{  
+                    $psw = $admininfo->password;
+                    if($psw!=$input['password']){  
+                        return back()->with('msg','密码错误！');  
+                    } 
+                    else{
+                        $pinfo = Partner::find($admininfo->partner_id);
+                        session(['partner_id'=>$admininfo->partner_id,'partner_name'=>$pinfo->title,'user_id'=>$admininfo->id]); 
+                        //如果登录成功就把账号密码存入cookie
+                        Cookie::queue('account', $input['account'], 10080); //视图自动响应
+                        Cookie::queue('password', $input['password'], 10080); //cookie保存一周
+                        return redirect('waiter/table?lang='.$this->lang); 
+                    } 
+               }  
+            }else{  
+                return back()->withErrors($validator);  
+            }  
+        }
+        else{
+            return view('waiter/index')->with("lang",$lang);;  
+        }
+    }
+
+    //新增餐厅房间信息
+    public function add_room()
+    {
+        $input = Input::all();
+        if($input){
+            DB::table('food_area')->insert(['partner_id' => $input['partner_id'],'room_name' => $input['roomname'],'room_name_en'=>$input['roomname_en'],'room_name_vi'=>$input['roomname_vi']]);
+        }
+        return redirect('desk_add');
+    }
+
+    //新增餐厅区域桌位信息
+    public function add_desk()
+    {
+        $input = Input::all();
+        $p_id = session('partner_id');
+        $desk = DB::table('food_area_desk')->where('partner_id',$p_id)->orderby('id','desc')->first(); //查询该商户最新桌位记录
+        if($desk){
+            $desk_sn = $desk->desk_sn;
+        }
+        else{
+            $desk_sn = 0 ;
+        }
+        if($input){
+            for($i=0;$i<$input['number'];$i++){
+                DB::table('food_area_desk')->insert(['team_id' =>2211,'partner_id' =>$p_id,'desk_sn'=>$desk_sn+1+$i,'area_id'=>5]);
+            }
+        }
+        return redirect('table');
+    }
+
+    //获取餐厅区域桌位信息
+    public function desk_info()
+    {
+        $p_id = session('partner_id');
+        //$p_name = session('partner_name');
+        if($p_id){
+            $areainfos = FoodArea::where('partner_id',$p_id)->get()->toArray();
+            $deskinfos = DB::table('food_area_desk')->join('food_desk_state', function($join)  
+            {  
+                $join->on('food_area_desk.desk_state', '=', 'food_desk_state.id');  
+            })->select('*')  
+              ->where('partner_id',$p_id)                 
+              ->orderBy('food_area_desk.desk_sn', 'asc')  
+              ->get()->toArray();   
+        }
+        $deskarr = [];
+        foreach ($deskinfos as $key => $deskinfo) {
+            $ordertemp = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)
+                         ->where('order_id',0)->where('is_cancel',0)->first();
+            if(!empty($ordertemp)){
+                if($deskinfo->desk_state!=3){
+                   DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>3]);
+                }
+            }
+            else{
+                if($deskinfo->desk_state==3){
+                    DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$deskinfo->desk_sn)->update(['desk_state'=>1]);
+                }
+            }
+            $deskarr[$key]['desk_sn'] = $deskinfo->desk_sn;
+            $deskarr[$key]['state_name'] = $deskinfo->state_name;
+            $deskarr[$key]['state_name_en'] = $deskinfo->state_name_en;
+            $deskarr[$key]['state_name_vi'] = $deskinfo->state_name_vi;
+            $deskarr[$key]['desk_state'] = $deskinfo->desk_state;
+            $deskarr[$key]['area_id'] = $deskinfo->area_id;
+        }
+        return view('waiter/table')->with('areainfos',$areainfos)->with('suffix',$this->suffix)
+        ->with('deskinfos',$deskarr)->with('lang',$this->lang);
+                                    
+    }           
+
+    //查询该餐厅所有的菜品分类和菜品
+    public function food_info()
+    {
+        $p_id = session('partner_id');
+        $desk_sn = $_GET['desk_sn'];
+        $arr = [];
+        $cateinfo = DB::table('food_cate')->where('partner_id',$p_id)->orderBy('display_order','desc')->get()->toArray();
+        $arr = $this->objectToArray($cateinfo); //将对象转为数组
+        $categorys = [];
+        $data = array();
+        $brr = [];
+        $prr = [];
+        foreach($cateinfo as $i=>$cate){
+            $categorys[$i] =  DB::table('food')->where('cate_id',$cate->id)->orderBy('display_order','desc')->get()->toArray();
+            $brr = $this->objectToArray($categorys[$i]);
+                foreach ( $brr as $j => $food) {
+                    $data[$i][$j]['id'] = $food['id'];
+                    $data[$i][$j]['title'.$this->suffix] = $food['title'.$this->suffix];
+                    $data[$i][$j]['price'] = round($food['price']);
+                    $data[$i][$j]['display_order'] = $food['display_order'];
+                    $data[$i][$j]['pack'] = $food['pack'];
+                    if($food['pack']==1){                 
+                        $prr = DB::table('food_packages')->where('food_id',$food['id'])->get()->toArray();
+                        $data[$i][$j]['packages'] = $this->objectToArray($prr);
+                    }
+                }
+        }
+        $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();
+        if($deskinfo->desk_state!=3){
+            DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['desk_state'=>2]); //点餐中
+        }
+        return view('waiter/order')->with('cateinfo',$arr)->with('data',$data)
+                                   ->with('suffix',$this->suffix)
+                                   ->with('desk_sn',$desk_sn) ->with('lang',$this->lang);
+    }
+
+    //服务员将购物车内的菜品显示在下单页
+    public function placeorder_info()
+    {
+        $p_id = session('partner_id');
+        $input = Input::all();
+        $desk_sn = $input['desk_sn'];
+        $goods = $input['goods'];
+        $arr = [];
+        $i = 0;
+        $allnum = 0;
+        $allprice = 0;
+        $food_num = 0; //几道菜
+        foreach($input['goods'] as $good){
+            if(!empty($good)){
+                $arr[$i]['id'] = $good['id'];
+                $arr[$i]['num'] = $good['num'];
+                $arr[$i]['title'] = $good['title'];
+                $arr[$i]['price'] = $good['price'];
+                $allnum = $good['num'] + $allnum;
+                $allprice = $good['price']*$good['num'] + $allprice;
+                $food_num += 1;
+                $i = $i+1;
+            }
+            else{
+                continue; 
+            }
+        } 
+        return view('waiter/placeorder')->with('lang',$this->lang)
+        ->with('desk_sn',$desk_sn)
+        ->with('goods',$arr)
+        ->with(['allnum'=>$allnum,'allprice'=>$allprice,'food_num'=>$food_num]);
+        //->with('allprice',$allprice);
+    }
+
+    //服务员确认下单
+    public function place_order()
+    {
+        $p_id = session('partner_id');
+        $input = Input::all();
+        $desk_sn = $input['desk_sn'];
+        $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();
+        $areainfo = DB::table('food_area')->where('partner_id',$p_id)->first();
+        $time = time();
+        $goods = $input['goods'];
+        $partner_object = DB::table('partner')->where('id',$p_id)->first();
+        $partner = $this->objectToArray($partner_object);
+        foreach($goods as $i=>$good){
+             //判断food_id里有没有下滑线
+            if(strpos($good['id'],'_')){
+                $arr = explode('_',$good['id']); //下滑线两端字符取值
+                $good_id = $arr[0];
+                $pack_id = $arr[1];
+            }
+            else{
+                $good_id = $good['id'];
+                $pack_id = 0;
+            }
+            DB::table('order_temp')
+            ->insert(['partner_id' => $p_id,
+                      'team_id' => $areainfo->team_id,
+                      'desk_sn' => $desk_sn,
+                      'food_id' => $good_id,
+                      'package_id' => $pack_id,
+                      'number' => $good['num'],
+                      'price' => $good['price'],
+                      'create_time' => $time,
+                      'remark' => $input['remark']
+                      ]);
+            $foodinfo = DB::table('food')->where('id',$good_id)->first();
+            //判断套餐
+            if($foodinfo->pack==1){
+                $package = DB::table('food_packages')->where('id',$pack_id)->first();
+                $orderTeam[$i] = [
+                'price' => $good['price'],
+                'quantity' => $good['num'],
+                'package' => serialize([
+                    'desk_sn' => $desk_sn,
+                    'title_zh_cn' => $foodinfo->title.'('.$package->name.')',
+                    'title_en_us' => $foodinfo->title_en.'('.$package->name_en.')',
+                    'title_vi' => $foodinfo->title_vi.'('.$package->name_vi.')',
+                    'pr_sn' => $partner['pr_sn']
+                ])
+                ];
+            }
+            else{
+                $orderTeam[$i] = [
+                    'price' => $good['price'],
+                    'quantity' => $good['num'],
+                    'package' => serialize([
+                        'desk_sn' => $desk_sn,
+                        'title_zh_cn' => $foodinfo->title,
+                        'title_en_us' => $foodinfo->title_en,
+                        'title_vi' => $foodinfo->title_vi,
+                        'pr_sn' => $partner['pr_sn']
+                    ])
+                    ];
+            }
+        }
+         //打印菜单
+         $order['service'] = "";
+         $order['desk_sn'] = $desk_sn;
+         $order['type'] = 'order';
+         $order['remark'] = $input['remark'];
+         $partner['feeTax'] = $partner['fee_tax'];
+         $partner['feeSrv'] = $partner['fee_srv'];
+         NewPrinter::singlePrint($partner, $order, $orderTeam);
+         DB::table('food_area_desk')->where('id',$deskinfo->id)->update(['desk_state'=>3]);
+         //return redirect('waiter/over?lang='.$this->lang)->with('lang',$this->lang);
+         return view('waiter/over')->with('lang',$this->lang);
+
+
+    }
+
+    //将桌位状态变为空闲
+    public function empty_desk()
+    {
+        $p_id = session('partner_id');
+        $desk_sn = $_GET['desk_sn'];
+        $update_row = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['desk_state'=>1]);
+        if($update_row){
+            return redirect('waiter/table?lang='.$this->lang);
+        }
+        else{
+            echo "更新数据失败";
+        }
+    }
+
+    //未结账页需要获取的数据
+    public function non_checkout()
+    {
+        $p_id = session('partner_id');
+        $desk_sn = $_GET['desk_sn'];
+        $enomination = 0;
+        $enomination = $_GET['price']; //代金券面额
+        $deskinfo = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();
+        $order_temp = DB::table('order_temp')->where('partner_id',$p_id)
+                                             ->where('desk_sn',$desk_sn)
+                                             ->where('order_id',0)->where('is_cancel',0)->get();
+        $pinfo = Partner::find($p_id);
+        $total_price = 0;  //原总价
+        foreach($order_temp as $v){
+            $total_price =  $v->price * $v->number + $total_price;
+        }
+        $srv_price = $total_price * $pinfo->fee_srv; //服务费
+        $tax_price = $total_price * $pinfo->fee_tax; //税费
+        $discount_price = $total_price * (1 - $pinfo->discount);    //打折要减去的价格
+        $last_price = intval($total_price - $discount_price + $srv_price + $tax_price-$enomination);    //最终应付价格
+        return view('waiter/reckoning')->with("lang",$this->lang)->with("enomination",$enomination)
+            ->with('desk_sn',$desk_sn)->with(['total_price'=>$total_price,'discount_price'=>$discount_price,'last_price'=>$last_price])
+            ->with(['srv_price'=>$srv_price,'tax_price'=>$tax_price]);
+    }
+
+    //现金支付
+    public function cash()
+    {
+        $desk_sn = $_GET['desk_sn'];
+        $last_price = $_GET['last_price'];
+        $enomination = $_GET['price'];
+        return view('waiter/cash')->with('lang',$this->lang)->with("enomination",$enomination)
+            ->with('desk_sn',$desk_sn)
+            ->with('last_price',$last_price);
+    }
+
+    //确认支付
+    public function confirm_payment()
+    {
+        $p_id = session('partner_id');
+        $desk_sn = $_GET['desk_sn'];
+        $last_price = $_GET['last_price'];
+        $partner_object = DB::table('partner')->where('id',$p_id)->first();
+        $partner = $this->objectToArray($partner_object);
+        $temp = DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->first();
+        $order_id = DB::table('order')->insertGetId([
+                    'team_id' => $temp->team_id,
+                    'partner_id' => $p_id,
+                    'desk_sn' => $desk_sn,
+                    'bu_type' => 4,
+                    'source' => 'waiter',
+                    'service' => 'cash',
+                    'state' => 'pay',
+                    'money' => $last_price,
+                    'create_time' => time(),
+                    'pay_time' => time()
+        ]);     
+        //结算打印小票
+        $ordertemps = DB::table('order_temp')
+                        ->where('partner_id',$p_id)
+                        ->where('desk_sn',$desk_sn)
+                        ->where('order_id',0)->get();
+        $orderTeam = [];
+        foreach ($ordertemps as $i => $ordertemp) {
+            $food = DB::table('food')->where('id',$ordertemp->food_id)->first();
+            if(!empty($food)){
+                if($food->pack==1){
+                    $package = DB::table('food_packages')->where('id',$ordertemp->package_id)->first();
+                    $orderTeam[$i] = [
+                    'price' => $ordertemp->price,
+                    'quantity' => $ordertemp->number,
+                    'package' => serialize([
+                        'desk_sn' => $desk_sn,
+                        'title_zh_cn' => $food->title.'('.$package->name.')',
+                        'title_en_us' => $food->title_en.'('.$package->name_en.')',
+                        'title_vi' => $food->title_vi.'('.$package->name_vi.')',
+                        'pr_sn' => $partner['pr_sn']
+                    ])
+                    ];
+                }
+                else{
+                  $orderTeam[$i] = [
+                    'price' => $ordertemp->price,
+                    'quantity' => $ordertemp->number,
+                    'package' => serialize([
+                        'desk_sn' => $desk_sn,
+                        'title_zh_cn' => $food->title,
+                        'title_en_us' => $food->title_en,
+                        'title_vi' => $food->title_vi,
+                        'pr_sn' => $partner['pr_sn']
+                    ])
+                    ];
+                }
+            }
+            else{
+                continue;
+            }
+        }
+        $order['service'] = "cash";
+        $order['remark'] = "";
+        $order['desk_sn'] = $desk_sn;
+        $order['type'] = 'cash';
+        $partner['feeTax'] = $partner['fee_tax'];
+        $partner['feeSrv'] = $partner['fee_srv'];
+        if(!empty($orderTeam)){
+            NewPrinter::singlePrint($partner, $order, $orderTeam);
+        }
+        else{
+            return redirect('waiter/table?lang='.$this->lang);
+        }
+        DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['order_id'=>$order_id]); 
+        //测试将临时单order_id =1
+       // DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['order_id'=>1]);
+        $update_row = DB::table('food_area_desk')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['desk_state'=>1]);
+        if($update_row){
+            return redirect('waiter/table?lang='.$this->lang);
+        }
+        else{
+            echo "更新数据失败";
+        }
+    }
+
+    //选择代金卷
+    public function coupon()
+    {
+        $p_id = session('partner_id');
+        $desk_sn = $_GET['desk_sn'];
+        $coupon_id = Input::get('coupon_id');
+        $enomination = $_GET['price'];
+        $arr = DB::table('coupon')->where('id',$coupon_id)->first();
+        $coupon_info = $this->objectToArray($arr);
+        $now = time();
+        if(!empty($coupon_id)){
+        if(!empty($arr)){
+          if($coupon_info['consume']=='N' && $now<=$coupon_info['expire_time']){
+             $msg =  "Vouchers null and void"; //信息不全
+             $expire_time = date("Y-m-d H:i:s",$coupon_info['expire_time']);
+             $sql = "SELECT c.id,o.id as order_id, pp.packagename,pp.packagenameen, t.title,t.titleen, 
+                            ot.quantity,c.expire_time,pp.price
+                    FROM `order` o,`orderteam` ot,`product_price` pp,`team` t,`coupon` c 
+                    WHERE c.order_id=ot.id and c.team_id=t.id and ot.orderid=o.id and 
+                    pp.proid=c.team_id and ot.packageid=pp.id and o.partner_id=".$p_id." and c.id=".$coupon_id;
+             $order = DB::select($sql);   
+             $orders = $this->objectToArray($order);
+             if(!empty($orders[0]['price'])){
+                 $enomination = round($orders[0]['price'],-2)*5;  //根据价格算出代金券面额
+                 //使用完作废代金券
+                // DB::table('coupon')->where('id',$coupon_id)->update(['consume'=>'Y','consume_time'=>time()]);
+            }   
+             return view('waiter/coupon')->with('lang',$this->lang)->with('orders',$orders)
+            ->with('desk_sn',$desk_sn)->with('msg',$msg)->with('enomination',$enomination)
+            ->with('expire_time',$expire_time);
+          }
+          elseif(!empty($coupon_info['id']) && $coupon_info['consume']=='Y'){
+             $msg =  "The voucher has been used";
+          }
+          elseif(!empty($coupon_info['id']) && $now>$coupon_info['expire_time']){
+             $msg = "The voucher has expired";
+          }
+          else{
+             $msg =  "Find no result";
+          }
+        }
+        else{
+             $msg = "No result";
+        }
+        }else{$msg = "";}
+         
+        return view('waiter/coupon')->with('lang',$this->lang)->with('desk_sn',$desk_sn)
+                                    ->with('msg',$msg)->with('enomination',$enomination);
+        //dd($coupon_info);
+    }
+
+    //微信支付
+    public function wechat()
+    {
+        $desk_sn = $_GET['desk_sn'];
+        $enomination = $_GET['price'];
+        return view('waiter/wechat')->with("lang",$this->lang)->with("enomination",$enomination)
+            ->with('desk_sn',$desk_sn);
+    }
+
+    //验证团购券
+    public function voucher(Request $request)
+    {
+        $p_id = session('partner_id');
+        $desk_sn = $_GET['desk_sn'];
+        $id = Input::get('voucher_id');
+        if(!empty($id)){
+            $op = 'foods_team'; //团购验券固定数据
+            $res = Helper::voucher($id, $op, $request->getClientIp());
+            if($res['msg']=="验证成功"){
+                $update_row = DB::table('food_area_desk')
+                              ->where('partner_id',$p_id)
+                              ->where('desk_sn',$desk_sn)
+                              ->update(['desk_state'=>2]);                
+            }
+            return view('waiter/voucher')->with("lang",$this->lang)->with("res",$res)
+            ->with('desk_sn',$desk_sn);
+        }
+        else{
+            return view('waiter/voucher')->with("lang",$this->lang)->with("voucher_id",$id)
+            ->with('desk_sn',$desk_sn);
+        }
+    }
+
+    //整体打折
+    public function discount()
+    {
+        $desk_sn = $_GET['desk_sn'];
+        return view('waiter/discount')->with("lang",$this->lang)
+            ->with('desk_sn',$desk_sn);
+    }
+
+     /**
+     * 对象转换数组
+     *
+     * @param $e StdClass对象实例
+     * @return array|void
+     */
+     public function objectToArray($e)
+     {
+         $e = (array)$e;
+         foreach ($e as $k => $v) {
+             if (gettype($v) == 'resource') return;
+             if (gettype($v) == 'object' || gettype($v) == 'array')
+                 $e[$k] = (array)$this->objectToArray($v);
+         }
+         return $e;
+     }
+
+    //已点的菜单详情列表
+    public function menu()
+    {
+        $p_id = session('partner_id');
+        $desk_sn = $_GET['desk_sn'];
+        $partner_object = DB::table('partner')->where('id',$p_id)->first();
+        $partner = $this->objectToArray($partner_object);
+        //退菜
+        if(!empty(Input::get('ordertemp_id'))){
+            $ordertemp_ids = Input::get('ordertemp_id');
+            $orderTeam = [];
+            foreach ($ordertemp_ids as $i => $ordertemp_id) {
+                //删除临时单数据前打印该小票
+                $tempinfo = DB::table('order_temp')->where('id',$ordertemp_id)->first();
+                $food = DB::table('food')->where('id',$tempinfo->food_id)->first();
+                if($food->pack==1){
+                    $package = DB::table('food_packages')->where('id',$tempinfo->package_id)->first();
+                    $orderTeam[$i] = [
+                    'price' => $tempinfo->price,
+                    'quantity' => $tempinfo->number,
+                    'package' => serialize([
+                        'desk_sn' => $desk_sn,
+                        'title_zh_cn' => $food->title.'('.$package->name.')',
+                        'title_en_us' => $food->title_en.'('.$package->name_en.')',
+                        'title_vi' => $food->title_vi.'('.$package->name_vi.')',
+                        'pr_sn' => $partner['pr_sn']
+                    ])
+                    ];
+                }
+                else{
+                $orderTeam[$i] = [
+                    'price' => $tempinfo->price,
+                    'quantity' => $tempinfo->number,
+                    'package' => serialize([
+                        'desk_sn' => $desk_sn,
+                        'title_zh_cn' => $food->title,
+                        'title_en_us' => $food->title_en,
+                        'title_vi' => $food->title_vi,
+                        'pr_sn' => $partner['pr_sn']
+                    ])
+                    ];
+                }
+                DB::table('order_temp')->where('id',$ordertemp_id)->delete();
+            }
+            $order['service'] = "Cancel dish";
+            $order['remark'] = "";
+            $order['desk_sn'] = $desk_sn;
+            $order['type'] = 'cancel';
+            $partner['feeTax'] = $partner['fee_tax'];
+            $partner['feeSrv'] = $partner['fee_srv'];
+            NewPrinter::singlePrint($partner, $order, $orderTeam);
+        }
+        $ordertemps = DB::table('order_temp')
+                        ->where('partner_id',$p_id)
+                        ->where('desk_sn',$desk_sn)
+                        ->where('order_id',0)->where('is_cancel',0)->get();
+        $arr = [];
+        $allnum = 0;
+        $allprice = 0;
+        foreach ($ordertemps as $key => $ordertemp) {
+            $food = DB::table('food')->where('id',$ordertemp->food_id)->first();
+            if(!empty($food)){
+                if($food->pack==1){
+                    $package = DB::table('food_packages')->where('id',$ordertemp->package_id)->first();         
+                    $arr[$key]['title'] = $food->title.'('.$package->name.')';
+                    $arr[$key]['title_en'] = $food->title_en.'('.$package->name_en.')';
+                    $arr[$key]['title_vi'] = $food->title_vi.'('.$package->name_vi.')';
+                }
+                else{
+                    $arr[$key]['title'] = $food->title;
+                    $arr[$key]['title_en'] = $food->title_en;
+                    $arr[$key]['title_vi'] = $food->title_vi;
+                }
+                $arr[$key]['id'] = $ordertemp->id;
+                $arr[$key]['number'] = $ordertemp->number;
+                $arr[$key]['price'] = $ordertemp->price;
+                $arr[$key]['remark'] = $ordertemp->remark;
+                $allnum += $ordertemp->number;
+                $allprice += $ordertemp->price;
+            }
+            else{
+                continue;
+            }
+        }
+        return view('waiter/menu')->with("lang",$this->lang)->with('desk_sn',$desk_sn)->with('ordertemps',$arr)
+                               ->with('suffix',$this->suffix)->with('allnum',$allnum)->with('allprice',$allprice);
+    } 
+    
+    //退菜-删除订餐临时单里的对应数据
+    public function cancel_dish()
+    {
+        $desk_sn = $_GET['desk_sn'];
+        $ordertemp_ids = Input::get('ordertemp_id');
+        foreach ($ordertemp_ids as $key => $ordertemp_id) {
+            DB::table('order_temp')->where('id',$ordertemp_id)->delete();
+        }
+        return view('waiter/menu')->with("lang",$this->lang)->with('desk_sn',$desk_sn);
+    }
+
+    public function test(Request $request)
+    {
+        
+    }
+    
+}

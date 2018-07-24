@@ -1,0 +1,642 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="{{url('css/mui.min.css')}}" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="{{url('css/reset.css')}}" />
+		<link rel="stylesheet" href="http://api.mofangtour.com/css/cart.css?v=1">
+		<!-- <link rel="stylesheet" type="text/css" href="{{url('css/style.css')}}" /> -->
+		<!-- 包含 bootstrap 样式表 -->
+        <link rel="stylesheet" href="https://apps.bdimg.com/libs/bootstrap/3.2.0/css/bootstrap.min.css">
+		<script src="{{url('js/mui.min.js')}}"></script>
+		<script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+    <script src="//cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	</head>
+	<style type="text/css">
+		.mui-col-xs-3::-webkit-scrollbar {
+			display: none;
+			width: 0;
+			height: 0;
+		}
+		
+		.mui-col-xs-9::-webkit-scrollbar {
+			display: none;
+			width: 0;
+			height: 0;
+		}
+		
+		.order {
+			position: fixed;
+			top: 44px;
+			left: 0;
+			right: 0;
+			bottom: 55px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			font-size: 1rem;
+		}
+		
+		.mui-row.mui-fullscreen>[class*="mui-col-"] {
+			height: 100%;
+		}
+		
+		.mui-col-xs-3,
+		.mui-control-content {
+			overflow-y: auto;
+			height: 100%;
+		}
+		
+		.mui-col-xs-3 {
+			background: #f3f5f7;
+		}
+		
+		.mui-segmented-control.mui-segmented-control-inverted .mui-control-item.mui-active {
+			color: #00a0dc;
+		}
+		
+		.mui-segmented-control .mui-control-item {
+			line-height: 50px;
+			width: 100%;
+			text-decoration: none;
+		}
+		
+		.mui-segmented-control.mui-segmented-control-inverted .mui-control-item.mui-active {
+			background-color: #fff;
+		}
+		
+		.mui-content {
+			background: white;
+		}
+		
+		.shopcar {
+			color: rgba(255, 255, 255, 0.4);
+			display: flex;
+			background: #141d27;
+			position: fixed;
+			z-index: 10;
+			bottom: 0;
+			width: 100%;
+			height: 55px;
+			border-top: 0.06rem solid #c8c7cc;
+		}
+
+        .shop {
+            width: 100%;
+            border-bottom: 0.06rem solid #c8c7cc;
+            /* height: 7rem;
+            position: relative; */
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+
+        .parce-pmbtn{
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .shoptitle {
+            /*position: absolute;
+            left: 1rem;
+            top: 1rem;
+            width: 10rem;
+            overflow: hidden;
+            white-space: nowrap;*/
+            text-overflow: ellipsis;
+            font-size: 1.4em;
+        }
+
+        .shopprice {
+            color: red;
+            /* position: absolute; */
+            /* right: 8rem; */
+            /* top: 5rem; */
+            font-size: 16px;
+            margin: 0.4rem 1rem 0 0;
+        }
+
+        .addor {
+            /*position: absolute;
+            right: 0.5rem;
+            top: 0.5rem;*/
+        }
+
+        .mui-segmented-control .mui-control-item{
+            /*white-space: normal;
+            padding: 0 0.3rem;*/
+        }
+	
+		
+		.otherul {
+			display: flex;
+			flex-wrap: wrap;
+		}
+		
+		.otherul li {
+			border-radius: 5px;
+			padding: 0.5rem 1.5rem;
+			text-align: center;
+			margin: 0.5rem;
+		}
+		
+		.litiel {
+			font-size: 0.8rem;
+			margin-left: 0.5rem;
+		}
+		
+		.icon-close {
+			position: absolute;
+			right: 1rem;
+			top: 0.3rem;
+			font-size: 1.3rem;
+		}
+		
+		.zhezhaoceng {
+			z-index: 11;
+			position: fixed;
+			top: 0;
+			left: 0;
+			bottom: 0;
+			right: 0;
+			height: 100%;
+			width: 100%;
+			background: rgba(7, 17, 27, 0.6);
+			display: none;
+		}
+		
+		.active {
+			border: 0.06rem solid #00a0dc;
+			color: #00a0dc;
+		}
+		
+		.ashopleft {
+			display: inline-block;
+			flex: 1;
+		}
+		
+		.ashopleft:active {
+			color: rgba(255, 255, 255, 0.4);
+		}
+		
+		.logowrapper {
+			display: inline-block;
+			position: relative;
+			top: -10px;
+			margin: 0 12px;
+			padding: 6px;
+			width: 56px;
+			height: 56px;
+			-webkit-box-sizing: border-box;
+			box-sizing: border-box;
+			vertical-align: top;
+			border-radius: 50%;
+			background: #141d27;
+		}
+		
+		.shoplogo {
+			width: 100%;
+			height: 100%;
+			border-radius: 50%;
+			background: #2b343c;
+			text-align: center;
+		}
+		
+		.icon-shopping_cart {
+			line-height: 44px;
+			font-size: 24px;
+			color: #80858a;
+		}
+		
+		.leftprice {
+			display: inline-block;
+			vertical-align: top;
+			margin-top: 12px;
+			line-height: 24px;
+			margin-left: 20px;
+			-webkit-box-sizing: border-box;
+			box-sizing: border-box;
+			font-size: 16px;
+			font-weight: 700;
+		}
+		
+		.leftnum {
+			position: absolute;
+			top: 0;
+			right: 0;
+			width: 24px;
+			height: 16px;
+			line-height: 16px;
+			text-align: center;
+			border-radius: 16px;
+			font-size: 9px;
+			font-weight: 700;
+			color: #fff;
+			background: #f01414;
+			display: none;
+		}
+		
+		.shopright {
+			flex: 0 0 105px;
+			width: 105px;
+			height: 55px;
+			line-height: 55px;
+			text-align: center;
+			font-size: 12px;
+			font-weight: 700;
+			background: #2b333d;
+		}
+		
+		.mui-backdrop {
+			z-index: 99;
+		}
+		 
+		#picture {
+			z-index: 100;
+		}
+		
+		.shopcars {
+			width: 100%;
+			background: white;
+		}
+		.shopcarstitle{
+			height: 40px;
+		    line-height: 40px;
+		    padding: 0 18px;
+		    background: #f3f5f7;
+		    border-bottom: 0.06rem solid rgba(7,17,27,0.1);
+		    font-size: 12px;
+		}
+		.golast:active{
+			color: rgba(255, 255, 255, 0.4);
+		}
+
+		.col-xs-9{/*margin-left:3.7%;*/width:100%;}
+		.list-group-item{height: 44px; border-left: none; border-right: none;
+            display: flex; padding: 0 0 0 10px; align-items: center; border-top: none; border-bottom: 0.06rem solid #ddd;}
+        .list-group-itemtwo{height: 44px; border-left: none; border-right: none; display: flex; padding: 1rem; border-bottom: 0.06rem solid gainsboro;}
+        .num{width: 20px; padding: 2px 0 0 0; text-align: center;}
+		.btn-blue{color: white; background: #5bc0de; border-radius: 25px;}
+        .btn-blue2{line-height: 18px; font-size: 14px;}
+        .btn-blue3{color: #00a0dc; background: white; border-radius: 25px; border: 1px solid #00a0dc; padding: 0 7px}
+		.modal-price{float: left; line-height: 26px; margin-left: 10px; font-size: 18px; color: red;}
+		.calc{display: flex; justify-content: flex-end;  align-items: center;}
+        .row {margin-right: 0px;margin-left: 0px;}
+        .col-xs-9{padding-right: 0px;  padding-left: 0px;}
+        .label1{line-height: 24px;}
+</style>
+
+	<body>
+		<header class="mui-bar mui-bar-nav" style="background: white;">
+			<a href="table?lang={{$lang}}"><span class="mui-icon mui-icon-back return" style="color:black"></span></a>
+			<h1 class="mui-title" style="font-size: 1rem;">@lang('foods.waiter_table_no')（{{$desk_sn}}）</h1>
+		</header>
+		<div class="order">
+			<div class="mui-content mui-row mui-fullscreen">
+				<div class="mui-col-xs-3">
+					<div id="segmentedControls" class="mui-segmented-control mui-segmented-control-inverted mui-segmented-control-vertical">
+						@foreach($cateinfo as $i=>$cate)
+						    @if($i==0)
+						    <a class="mui-control-item mui-active" href="#content{{$i+1}}">{{$cate['name'.$suffix]}}</a>
+						    @else
+							<a class="mui-control-item" href="#content{{$i+1}}">{{$cate['name'.$suffix]}}</a>
+							@endif
+						@endforeach
+					</div>
+				</div>
+				<div id="segmentedControlContents" class="mui-col-xs-9" style="border-left: 1px solid #c8c7cc;">
+					<div id="item1" class="mui-control-content mui-active">
+					@foreach($data as $j=>$foods)
+					    @if($j==0)
+						<div id="content{{$j+1}}" class="mui-control-content mui-active">
+						@else
+						<div id="content{{$j+1}}" class="mui-control-content">
+						@endif
+							@foreach($foods as $food)
+							<div class="shop">
+								<div class="shoptitle">{{$food['title'.$suffix]}}</div>
+                                <div class="parce-pmbtn">
+                                    <div class="shopprice">฿{{$food['price']}}</div>
+                                    @if($food['pack']==1)
+                                        <div class="addor">
+                                            <button class="btn btn-xs btn-blue pack" data-toggle="modal" data-target=".bs-example-modal-sm" style="padding: 0.2rem 1rem; ">@lang('foods.waiter_specifications')</button>
+                                            <div data-id="{{$food['id']}}" style="display: none;">
+                                                @foreach($food['packages'] as $pack)
+                                                    <input type="hidden" data-id="{{ $pack['food_id'].'_'.$pack['id'] }}" data-name="{{$food['title'.$suffix]}}（{{ $pack['name'.$suffix] }}）" data-price="{{ $pack['price'] }}">
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="addor">
+                                            <div class="calc calc_{{$food['id']}}" data-id="{{$food['id']}}" data-title="{{$food['title'.$suffix]}}" data-price="{{$food['price']}}">
+                                                <span class="glyphicon glyphicon-minus-sign icon-color2"></span>
+                                                <span class="num">0</span>
+                                                <span class="glyphicon glyphicon-plus-sign icon-color2"></span>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+
+							</div>
+							@endforeach
+						</div>
+						@endforeach
+					</div>
+				</div>
+			</div>
+		</div>
+		{{--模态框--}}
+                        <div class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel"  data-backdrop="true">
+                            <div class="modal-dialog modal-sm" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                        <h4 class="modal-title">@lang('foods.waiter_menu')</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>One fine body&hellip;</p>
+                                        <span class="label label-default">Default</span>
+                                        <span class="label label-primary">Primary</span>
+                                        <span class="label label-success">Success</span>
+                                        <span class="label label-info">Info</span>
+                                        <span class="label label-warning">Warning</span>
+                                        <span class="label label-danger">Danger</span>
+                                        <span class="label label-default">Default</span>
+                                        <span class="label label-primary">Primary</span>
+                                        <span class="label label-success">Success</span>
+                                        <span class="label label-info">Info</span>
+                                        <span class="label label-warning">Warning</span>
+                                        <span class="label label-danger">Danger</span>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <div class="modal-price"></div>
+                                        <button id="toCart" type="button" class="btn btn-primary" style="display: none;" disabled>加入购物车</button>
+                                        <div class="calc calc2 modal-pm" data-id="" data-title="" data-price="" style="display: none;">
+                                            <span class="glyphicon glyphicon-minus-sign icon-color2" style="opacity: 0;"></span>
+                                            <div class="num">0</div>
+                                            <span class="glyphicon glyphicon-plus-sign icon-color2"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+			<div class="row shopcart">
+                    <div class="col-xs-9">
+                        <form action="placeorder?lang={{$lang}}" method="post" enctype="">
+                            <div class="content">
+                                <div class="content-left" style="width:100%;">
+                                    <div class="cart-wrapper">
+                                        <div class="cart">
+										    <span class="glyphicon glyphicon-shopping-cart icon-color1"></span>
+                                        </div>
+                                        <div class="num1" style="display: none;">0</div>
+                                    </div>
+                                    <div class="price">฿<span>0</span></div>
+                                </div>
+
+                                <div class="content-right" style="width: 100%;">
+                                    <input id="submit" type="submit" class="pay not-enough" value="@lang('foods.waiter_choose_meal')" disabled>
+									<!-- <input id="submit" type="button" class="pay not-enough" value="请选餐" onclick="balance()" disabled> -->
+                                </div>
+
+                                <div class="shopcart-List" style="display: none;">
+                                    <div class="list-header">
+                                        <span class="title1">@lang('foods.waiter_shopping_cart')</span>
+                                        <span class="empty">@lang('foods.waiter_clear')</span>
+										<input type="hidden" name="desk_sn" value="{{$desk_sn}}">
+                                        {{ csrf_field() }}
+                                    </div>
+                                    <div class="list-content">
+                                        <ul id="list" class="list-group">
+                                            {{--<li class="list-group-item cart-list">
+                                                <div class="name">牛肉馅饼</div>
+                                                <div class="price">฿<span>14</span></div>
+                                                <div class="controller">
+                                                    <span class="glyphicon glyphicon-minus-sign icon-color2" style="display: none;"></span>
+                                                    <div class="num">1</div>
+                                                    <span class="glyphicon glyphicon-plus-sign icon-color2"></span>
+                                                </div>
+                                            </li>--}}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="list-mask" style="display: none;"></div>
+                    </div>
+                </div>
+		</div> 
+		
+		<script type="text/javascript">
+			mui.init()
+
+
+
+		$("#mytab a").click(function (e) {
+            e.preventDefault();
+            $(this).tab("show");
+        });
+
+        // 弹出初始化
+        var cartList = $(".shopcart-List");
+        var mask = $(".list-mask");
+        var high = $('#list').children().length;
+		var arr = new Array();  
+		var i = 0;
+
+        // 隐藏
+        function cartHide() {
+            cartList.animate({top: high*400+'px'}).hide("fast");
+            mask.hide();
+        }
+
+        // 弹出购物车图层
+        $(".cart").click(function (e) {
+            //console.log(high);
+            if(cartList.is(':hidden') && $('#list').children().length>0){
+                mask.show();
+                cartList.show("fast");
+                cartList.animate({top: '0px'});
+            } else {
+                cartHide();
+            }
+        });
+
+        // 点击mask 隐藏
+        $(".list-mask").on("click", cartHide);
+
+        // 点击规格套餐
+        $(".pack").on("click", function (e) {
+            $(".modal-body").empty();
+            $(".calc2").hide();
+            var id = $(this).next().attr("data-id");
+            var packages = $(this).next().children();
+            //$(".modal-body").append('<input type="hidden" name="fid" value="'+id+'">');
+            packages.each(function (i, e) {
+                console.log(i, $(this).attr("data-name"), $(this).attr("data-price"));
+                /*if (i == 0) {
+                    $(".modal-price").html($(this).attr("data-price"));
+                }*/ //' + (i==0?'label-primary':'label-info') + '
+                $label = '<span class="label label-info label1" data-id="' + $(this).attr("data-id") + '" data-price="' + $(this).attr("data-price") + '">' + $(this).attr("data-name") + '</span>\n';
+                $(".modal-body").append($label);
+            })
+        });
+
+        // 规格标签点击 label1
+        $(".modal-body").on("click", ".label1", function (e) {
+            var id = $(this).attr("data-id");
+            var price = parseFloat($(this).attr("data-price"));
+            var title = $(this).text();
+            $(".calc2").attr("data-id", id);
+            $(".calc2").attr("data-price", price);
+            $(".calc2").attr('data-title', title);
+            $(".calc2").removeClass().addClass("calc calc2 calc_"+id);
+            //$("#toCart").removeAttr("disabled");
+
+            $(this).removeClass("label-info").addClass("label-primary").siblings().removeClass("label-primary").addClass("label-info");
+            $(".modal-price").html($(this).attr("data-price"));
+
+            $(".calc2").show();
+            var num = !$("#food_"+id).find(".num").html()?0:$("#food_"+id).find(".num").html();
+            console.log('zynum:', num);
+            $(".calc2").find(".num").html(num);
+
+        });
+
+        /**
+         * zhaoyao cart
+         * @param $this
+         * @param $op
+         */
+        function cartAdd($id, $title, $price,$n,$i) {
+            if ($("#list").find("#food_"+$id).attr("id") == 'food_'+$id) {
+                console.log("finded",'food_'+$id, $("#list").find("#food_"+$id).attr("id"));
+            } else {	
+				i = i+1;	
+                html =
+                    '<li class="list-group-item cart-list" id="food_' + $id + '">\n' +
+                        '<div class="name" style="width: 70%">' + $title + '</div>\n' +
+                        '<div class="price">฿<span>' + $price + '</span></div>\n' +
+                        '<div class="calc controller calc_' + $id + '" data-id="' + $id + '" data-price="' + $price + '">\n' +
+                            '<span class="glyphicon glyphicon-minus-sign icon-color2"></span>\n' +
+                            '<div class="num">' + $n + '</div>\n' +
+                            '<span class="glyphicon glyphicon-plus-sign icon-color2"></span>\n' +
+							'<input type="hidden" name="goods[' + ($i) + '][id]" value="' + $id + '">' +
+                            '<input type="hidden" class="num2" name="goods[' + ($i) + '][num]" value="' + $n + '">' +                     
+							'<input type="hidden" name="goods[' + ($i) + '][title]" value="' + $title + '">' +
+							'<input type="hidden" name="goods[' + ($i) + '][price]" value="' + $price + '">' +
+                        '</div>\n' +
+                    '</li>';		
+                $("#list").append(html);
+            }
+			
+        }
+
+        // 有用  加减
+        function balance(e) { // $this, $op
+            // 初始化
+            var op = e.data.op;
+            var id = $(this).parent().attr("data-id");
+
+            var title = $(this).parent().attr("data-title");
+            var n = parseInt($(this).parent().children(".num").html()); //
+            var nTotal = parseInt($(".num1").html());
+            var price = parseFloat($(this).parent().attr("data-price"));
+            var priceTotal = parseFloat($(".content-left .price").find("span").html());
+
+            // 处理+ - 法
+			
+            if (op == "plus") {
+                $("#submit").removeAttr("disabled");			
+                ++ n;
+                ++ nTotal;
+                priceTotal += price;
+                cartAdd(id, title, price,n,i); 			         
+            } else { 
+                if (n > 0) {
+                    --n;
+                    --nTotal;
+                    priceTotal -= price;
+                }
+            }
+
+			/* $.ajax({
+                type: "POST",//方法类型
+                dataType: "text",//预期服务器返回的数据类型
+                url: "test" ,//url
+                data: arr,
+                success: function (result) {
+                    console.log(result);//打印服务端返回的数据(调试用)
+                    if (result.resultCode == 200) {
+                        alert("SUCCESS");
+                    }
+                    ;
+                },
+                error : function() {
+                    alert("异常！");
+                }
+            }); */
+			
+
+            // 图标状态
+            if (nTotal > 0) {
+                $(".num1").show();
+                $(".glyphicon-shopping-cart").addClass("icon-color2")
+                $("#submit").addClass("enough");//.val("去结算");
+            } else {
+                $(".num1").hide();
+                $(".glyphicon-shopping-cart").removeClass("icon-color2")
+                $("#submit").removeClass("enough").attr("disabled", true);//.val("请选餐");
+                $(".shopcart-List").animate({top: '500px'}).hide("fast");
+            }
+
+            // 控制减号图标显示和隐藏
+            if (n > 0) {
+                $(".calc_"+id).find(".glyphicon-minus-sign").css("opacity", 1);//show();
+            } else {
+                $(".calc_"+id).find(".glyphicon-minus-sign").css("opacity", 0)//hide();
+                $("#food_"+id).remove();
+            }
+
+            // 回填数据
+			console.log('arr: ' + arr);
+            console.log('id: ' + id);
+            console.log('n: ' + n);
+            console.log('nTotal: ' + nTotal);
+            console.log('price: ' + price);
+            console.log('priceTotal: ' + priceTotal);
+            console.log('-------------------------');
+
+            $(".calc_"+id).find(".num").html(n); //$(this).parent().find(".num").html(n);
+            $(".calc_"+id).find("input[class=num2]").val(n); //$(this).parent().find(".num").html(n);
+            $(".num1").html(nTotal);
+            $(".content-left .price").find("span").html(priceTotal.toFixed(2))
+        }
+
+        // + - 操作
+        $(".glyphicon-plus-sign").on("touchstart", {'op':"plus"}, balance);
+        $(".glyphicon-minus-sign").on("touchstart", {'op':"minus"}, balance);
+        $("#list").on("touchstart", ".glyphicon-plus-sign", {'op':"plus"}, balance);
+        $("#list").on("touchstart", ".glyphicon-minus-sign", {'op':"minus"}, balance);
+
+        // 清空购物车
+        $(".empty").on("touchstart", function (e) {
+            $(".calc").find(".num").html(0);
+            $(".num1").html(0);
+            $(".content-left .price").find("span").html("0.00");
+            $("#list").empty();
+            $("#submit").attr("disabled", true);
+            $(".shopcart-List").animate({top: '500px'}).hide("fast");
+            $(".list-mask").hide();
+            $(".glyphicon-minus-sign").css("opacity", 0);//.hide("slow");
+        });
+
+		</script>
+	</body>
+
+</html>
