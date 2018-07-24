@@ -192,7 +192,7 @@ class TableController extends Controller
            $menu_list[$k]["number"] = $v->number;
            $menu_list[$k]["price"] = $v->price*$v->number;
        }
-       dump($menu_list);die;
+       // dump($menu_list);die;
       //拼接各种费用
         //获取总价
         $total_price = 0;  //原总价
