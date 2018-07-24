@@ -399,7 +399,7 @@ class TableController extends Controller
         //根据当前的菜品种类获取所有的菜信息
         $foods = [];
         foreach ($arr as $k => $v) {
-            $foods[$k] =  DB::table('food')->where('cate_id',$v['id'])->orderBy('display_order','desc')->get()->toArray();
+            $foods[$k] =  DB::table('food')->select('id', 'team_id','cate_id','food_no','title','title_en','title_vi','price','market_price','display_order','pack','status')->where('cate_id',$v['id'])->orderBy('display_order','desc')->get()->toArray();
             //每次遍历所有的食物获取套餐
             foreach ($foods[$k] as $kk => $vv) {
                 if($vv->pack==1){                 
