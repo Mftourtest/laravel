@@ -10,8 +10,6 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
-<<<<<<< HEAD
-=======
       /**
      * 返回json数据
      * @param int $status  返回状态
@@ -33,5 +31,4 @@ class Controller extends BaseController
         $str = sha1($str);  //SHA1加密
         return $str;
     }
->>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
 }
