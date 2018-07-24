@@ -101,16 +101,16 @@ Route::group(['prefix' => 'seafood'], function() {
  * licongmin route
  */
 //登陆
-Route::any('login', 'Table\TableController@login');
+Route::any('login', 'Cashier\TableController@login');
 //注册
-Route::any('register', 'Table\TableController@register');
+Route::any('register', 'Cashier\TableController@register');
 //接口路由
-Route::group(['middleware'=>'logins','prefix' => 'table'],function() {
-            Route::any('room', 'Table\TableController@room');//返回餐厅房间信息
-            Route::any('table', 'Table\TableController@table');//返回房间桌位信息
-            Route::any('order', 'Table\TableController@order');//点击桌号返回订单信息
-            Route::any('print', 'Table\TableController@print_order');//打印厨房下单
-            Route::any('food_info', 'Table\TableController@food_info');//点餐-获取所有商户菜单分类和菜和规格
-            Route::any('edit_coupon', 'Table\TableController@edit_coupon');//桌台-修改商家优惠
+Route::group(['middleware'=>'logins','prefix' => 'cashier'],function() {
+            Route::any('room', 'Cashier\TableController@room');//返回餐厅房间信息
+            Route::any('table', 'Cashier\TableController@table');//返回房间桌位信息
+            Route::any('order', 'Cashier\TableController@order');//点击桌号返回订单信息
+            Route::any('print', 'Cashier\TableController@print_order');//打印厨房下单
+            Route::any('food_info', 'Cashier\TableController@food_info');//点餐-获取所有商户菜单分类和菜和规格
+            Route::any('edit_coupon', 'Cashier\TableController@edit_coupon');//桌台-修改商家优惠
 });
 

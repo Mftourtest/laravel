@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Table;
+namespace App\Http\Controllers\Cashier;
 
 use App;
 use Illuminate\Http\Request;
