@@ -89,7 +89,7 @@ class TableController extends Controller
 
         // $arr = [];
         if($info) {
-            return  $this->json_encode(1,$info);
+            return  $this->json_encode(1,"查询成功",$info);
                 // $arr['code']=1;
                 // $arr['msg']="查询成功";
                 // $arr['data'] = $rooms;
@@ -98,7 +98,7 @@ class TableController extends Controller
                 // $arr['code']=0;
                 // $arr['msg']="查询失败";
                 // $arr['data'] = "";
-                return  $this->json_encode(0,"查询失败");
+                return  $this->json_encode(0,"查询失败","");
          }
          // return json_encode($arr,JSON_UNESCAPED_UNICODE);
     }
@@ -253,7 +253,7 @@ class TableController extends Controller
         if(empty($data)){
             // Response::show(404,'账号或密码输入错误');
             // exit;
-            return $this->json_encode(1,"账号或密码输入错误");
+            return $this->json_encode(1,"账号或密码输入错误","");
         }else{
             //更新token到数据库
             $data['token']=$token;
