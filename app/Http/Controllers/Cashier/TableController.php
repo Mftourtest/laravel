@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Table;
+namespace App\Http\Controllers\Cashier;
 
 use App;
 use Illuminate\Http\Request;
@@ -148,7 +148,69 @@ class TableController extends Controller
     }
     //桌台-未结账返回结账信息页
     public function paymoney_info(Request $request) {
-        echo "桌台-未结账返回结账信息页";
+        //获取partner_id
+         $p_id = $request->input("partner_id");
+        //获取id 用来获取服务员用户名
+        $id = $request->input("user_id");
+        $pinfo = DB::table('partner_admin')->where("id",$id)->first();
+        $username = $pinfo->account;
+         // 获取桌位号
+        $desk_sn = $request->input("desk_sn");
+        //获取桌号和服务员放到数组中
+        $deskinfo["waiter"] = $username;
+        $deskinfo["desk_sn"] = $desk_sn;
+        // dump($deskinfo);die;
+        //判断当前的桌位号是否为未结账状态
+        $status= DB::table('food_area_desk')->where("partner_id",$p_id)->where("desk_sn",$desk_sn)->first()->desk_state;
+        // echo $status;
+        if($status!=3) return $this->json_encode(0,"当前餐桌状态不是未结账状态","");
+        // 获取代金券
+        $enomination = $request->input("price"); //代金券面额
+        if(!isset($enomination)) {
+                $enomination = 0;
+            
+        }
+        //查询临时订单表
+          $order_temp = DB::table('order_temp')->leftJoin("food",'food.id', '=', 'order_temp.food_id')->where('order_temp.partner_id',$p_id)->where('order_temp.desk_sn',$desk_sn)->where('order_temp.order_id',0)
+          ->select('order_temp.*', 'food.title', 'food.title_en','food.title_vi','food.thumb')->get();
+       //拼接菜单明细数组
+       $menu_list = [];
+       foreach ($order_temp as $k => $v) {
+           $menu_list[$k]["thumb"] = $v->thumb;
+           $menu_list[$k]["title"] = $v->title;
+           $menu_list[$k]["title_en"] = $v->title_en;
+           $menu_list[$k]["title_vi"] = $v->title_vi;
+           $menu_list[$k]["number"] = $v->number;
+           $menu_list[$k]["price"] = $v->price*$v->number;
+       }
+       // dump($menu_list);die;
+      //拼接各种费用
+        //获取总价
+        $total_price = 0;  //原总价
+         foreach($menu_list as $v){
+            $total_price =  $v['price'] + $total_price;
+        }
+         $shanghuinfo = Partner::find($p_id);
+         // dump($shanghuinfo);die;
+        //服务费
+        $srv_price = round($total_price * $shanghuinfo->fee_srv); //服务费
+        $tax_price = round($total_price * $shanghuinfo->fee_tax); //税费
+        $discount_price = round($total_price * (1 - $shanghuinfo->discount));    //打折要减去的价格
+          if($total_price-$discount_price+$srv_price+$tax_price>=$enomination){ //如果打折后价格大于代金券的价格
+            $last_price = round($total_price - $discount_price + $srv_price + $tax_price - $enomination);    //最终应付价格
+        }
+        else{
+            $last_price = 0;
+        }
+         // echo $last_price;die;
+        //最后返回json格式的数据
+        $data['deskinfo'] = $deskinfo;
+        $data['menu_list'] = $menu_list;
+        $data['srv_price'] = $srv_price;
+        $data['tax_price'] = $tax_price;
+        $data['discount_price'] = $discount_price;
+        $data['last_price'] = $last_price;
+        return $this->json_encode(1,"查询成功",$data);
     }
     //点击桌号返回订单信息
      public function order(Request $request) {
