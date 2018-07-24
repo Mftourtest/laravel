@@ -380,9 +380,14 @@
                                         <h4 class="modal-title">@lang('foods.waiter_menu')</h4>
                                     </div>
                                     <div class="modal-body">
+<<<<<<< HEAD
+                                         <p>One fine body&hellip;</p>
+                                        <span class="label label-default">Default</span>
+=======
                                          <!-- <p>One fine body&hellip;</p> -->
                                          <input type="text" name="">
                                        <!--  <span class="label label-default">Default</span>
+>>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
                                         <span class="label label-primary">Primary</span>
                                         <span class="label label-success">Success</span>
                                         <span class="label label-info">Info</span>
@@ -393,6 +398,14 @@
                                         <span class="label label-success">Success</span>
                                         <span class="label label-info">Info</span>
                                         <span class="label label-warning">Warning</span>
+<<<<<<< HEAD
+                                        <span class="label label-danger">Danger</span>  
+                                    </div>
+                                    <div class="modal-footer">
+                                        <div class="modal-price"></div>
+                                        <button id="toCart" type="button" class="btn btn-primary" style="display: none;" disabled>加入购物车</button>
+                                        <div class="calc calc2 modal-pm" data-id="" data-title="" data-price="" style="display: none;">
+=======
                                         <span class="label label-danger">Danger</span>   -->
                                         <!-- <div>฿{{$food['price']}}</div> -->
 
@@ -401,6 +414,7 @@
                                         <div class="modal-price">111</div>
                                         <button id="toCart" type="button" class="btn btn-primary" style="display: none;" disabled>加入购物车</button>
                                         <div class="calc calc2 modal-pm" data-id="" data-title="" data-price="" >
+>>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
                                             <span class="glyphicon glyphicon-minus-sign icon-color2" style="opacity: 0;"></span>
                                             <div class="num">0</div>
                                             <span class="glyphicon glyphicon-plus-sign icon-color2"></span>
@@ -660,6 +674,8 @@
             })
         });
 
+<<<<<<< HEAD
+=======
         $(".seafood").on("click", function (e) {
             $(".modal-body").empty();
             // $(".calc2").hide();
@@ -678,6 +694,7 @@
         });
 
 
+>>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
         // 规格标签点击 label1
         $(".modal-body").on("click", ".label1", function (e) {
             var id = $(this).attr("data-id");
@@ -830,11 +847,14 @@
         });
 
 		</script>
+<<<<<<< HEAD
+=======
 		<script type="text/javascript">
 			$(".pack").click(function(){
 				console.log($('.shopprice').html());
 			})
 		</script>
+>>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
 	</body>
 
 </html>

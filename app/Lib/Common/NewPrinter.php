@@ -151,7 +151,6 @@ class NewPrinter {
             foreach ($orderTeam as $i=>$ot) {
                 $package = unserialize($ot['package']);
                 $footData['deskSn'] = $package['desk_sn'];
-
                 if ($prSn == $package['pr_sn']) {
                     $arr[$i] = array(
                         'title'  => $package['title' . $suffix],
@@ -161,13 +160,12 @@ class NewPrinter {
                     );
                 }
             }
-
+           
             list($info, $nums) = self::typeSetting($arr, 14, 7, 3, 6);
 
             $orderInfo .= $info; // var_dump($info);
 
             $orderInfo .= self::kitchenFooterPrint($footData);
-
             //for ($i=0; $i<$count; $i++) {
             if(count($arr) > 0) {
                 self::wpPrint($prSn, $orderInfo, 1);

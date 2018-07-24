@@ -95,10 +95,6 @@ class RestaurantController extends Controller
     //获取餐厅区域桌位信息
     public function desk_info()
     {
-
-
-
-
         $p_id = session('partner_id');
         //如果session过期就跳回登录页
         if(empty($p_id)){
@@ -148,8 +144,14 @@ class RestaurantController extends Controller
             return redirect('waiter/index?lang='.$this->lang);
         }
         $desk_sn = $_GET['desk_sn'];
+        $partner = DB::table('partner')->where('id',$p_id)->first();
+        if($partner->pid==0){
+            $cateinfo = DB::table('food_cate')->where('partner_id',$p_id)->orderBy('display_order','desc')->get()->toArray();
+        }
+        else{
+            $cateinfo = DB::table('food_cate')->where('partner_id',$partner->pid)->orderBy('display_order','desc')->get()->toArray();
+        }
         $arr = [];
-        $cateinfo = DB::table('food_cate')->where('partner_id',$p_id)->orderBy('display_order','desc')->get()->toArray();
         $arr = $this->objectToArray($cateinfo); //将对象转为数组
         $categorys = [];
         $data = array();
@@ -262,8 +264,9 @@ class RestaurantController extends Controller
                       ]);
             $foodinfo = DB::table('food')->where('id',$good_id)->first();
             $foodcate = DB::table('food_cate')->where('id',$foodinfo->cate_id)->first();
+
             //判断菜分类里的打印机编号是不是数字
-            if(intval($foodcate->pr_sn)==0){
+            if(empty($foodcate->pr_sn)){
                 $pr_arr['p'.$p_id] = $foodcate->pr_sn;
             }
             else{
@@ -305,12 +308,11 @@ class RestaurantController extends Controller
          $order['remark'] = $input['remark'];
          $partner['feeTax'] = $partner['fee_tax'];
          $partner['feeSrv'] = $partner['fee_srv'];
-         $old_lang = $this->lang;
          NewPrinter::singlePrint($partner, $order, $orderTeam);
-         NewPrinter::categoryPrint($partner, $order, $orderTeam); //厨房分类打印
+         //NewPrinter::categoryPrint($partner, $order, $orderTeam); //厨房分类打印
          DB::table('food_area_desk')->where('id',$deskinfo->id)->update(['desk_state'=>3]);
-         //return redirect('waiter/over?lang='.$this->lang)->with('lang',$this->lang);
-         return view('waiter/orderover')->with('lang',$old_lang);
+         return redirect('waiter/orderover?lang='.$this->lang)->with('lang',$this->lang);
+         //return view('waiter/orderover')->with('lang',$this->lang);
 
 
     }
@@ -361,7 +363,7 @@ class RestaurantController extends Controller
         $orderNewTemp = DB::table('order_temp')->where('partner_id',$p_id)
                        ->where('desk_sn',$desk_sn)->where('is_print',0)
                        ->where('order_id',0)->get();
-        if(!empty($orderNewTemp[0])){
+        if(!$orderNewTemp->isEmpty()){
             $is_print = 1; //需要手动打印
         }
         else{
@@ -403,7 +405,7 @@ class RestaurantController extends Controller
                         ->where('partner_id',$p_id)
                         ->where('desk_sn',$desk_sn)
                         ->where('order_id',0)->get();
-        if(!empty($ordertemps)){
+        if(!$ordertemps->isEmpty()){
             $order_id = DB::table('order')->insertGetId([
                 'team_id' => $ordertemps[0]->team_id,
                 'partner_id' => $p_id,
@@ -634,7 +636,7 @@ class RestaurantController extends Controller
                 $food = DB::table('food')->where('id',$tempinfo->food_id)->first();
                 $foodcate = DB::table('food_cate')->where('id',$food->cate_id)->first();
                 //判断菜分类里的打印机编号是不是数字
-                if(intval($foodcate->pr_sn)==0){
+                if(empty($foodcate->pr_sn)){
                     $pr_arr['p'.$p_id] = $foodcate->pr_sn;
                 }
                 else{
@@ -676,7 +678,7 @@ class RestaurantController extends Controller
             $partner['feeTax'] = $partner['fee_tax'];
             $partner['feeSrv'] = $partner['fee_srv'];
             NewPrinter::singlePrint($partner, $order, $orderTeam);  //前台打印
-            NewPrinter::categoryPrint($partner, $order, $orderTeam); //厨房分类打印
+            //NewPrinter::categoryPrint($partner, $order, $orderTeam); //厨房分类打印
         }
         $ordertemps = DB::table('order_temp')
                         ->where('partner_id',$p_id)
@@ -750,7 +752,7 @@ class RestaurantController extends Controller
             $food = DB::table('food')->where('id',$ordertemp->food_id)->first();
             $foodcate = DB::table('food_cate')->where('id',$food->cate_id)->first();
             //判断菜分类里的打印机编号是不是数字
-            if(intval($foodcate->pr_sn)==0){
+            if(empty($foodcate->pr_sn)){
                 $pr_arr['p'.$p_id] = $foodcate->pr_sn;
             }
             else{
@@ -797,8 +799,8 @@ class RestaurantController extends Controller
         $partner['feeSrv'] = $partner['fee_srv'];
         if(!empty($orderTeam)){
             NewPrinter::singlePrint($partner, $order, $orderTeam);
-            NewPrinter::categoryPrint($partner, $order, $orderTeam); //厨房分类打印
-            return redirect('waiter/orderover?lang='.$this->lang); 
+            //NewPrinter::categoryPrint($partner, $order, $orderTeam); //厨房分类打印
+            return redirect('waiter/orderover?lang='.$this->lang)->with('lang',$this->lang); 
         }
         else{
             return redirect('waiter/table?lang='.$this->lang); 
@@ -807,26 +809,10 @@ class RestaurantController extends Controller
 
     public function test(Request $request)
     {
-
-        $p_id = session('partner_id');
-        $foodname = 'B00';
-        $foodcate = DB::table('food_cate')->where('partner_id',$p_id)->first();
-        $team_id = $foodcate->team_id;
-        $search_foods = DB::table('food')->where('team_id',$team_id)->where('title','like',"%$foodname%")->get()->map(function ($value) {return (array)$value;})->toArray();
-        dump($search_foods);
-        echo $team_id;
-
-        // echo  123456;die;
-        $p_id = session('partner_id');
-        // echo $p_id;
-        $foodname = 'B00';
-         $foodcate = DB::table('food_cate')->where('partner_id',$p_id)->first();
-        $team_id = $foodcate->team_id;
-        // $search_foods = DB::table('food')->where('team_id',$team_id)->get()->map(function ($value) {return (array)$value;})->toArray();   
-      $search_foods = DB::table('food')->where('team_id',$team_id)->first();
-        //return  json_encode($search_foods);
-         echo $team_id;
-
+        $p_id = 668;
+        //$p_id = session('partner_id');
+        $table = FoodArea::where("partner_id",$p_id)->get();
+        dump($table);
     }
     
 }

@@ -129,7 +129,10 @@
 					})
 				}
 			})
+<<<<<<< HEAD
+=======
 			{{--  setInterval(function () { location.reload(); },"3000");  --}}
+>>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
 		</script>
 	</body>
 

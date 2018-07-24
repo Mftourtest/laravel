@@ -67,7 +67,7 @@ class Helper
 
                     // 打印
                     $res['order'] = Order::where(['id' => $coupon['order_id']])->first();
-                    $res['print'] = Printer::teamPrint($partner, $res['order'], $team);
+                    $res['print'] = NewPrinter::teamPrint($partner, $res['order'], $team);
                 }
 
             /*} else {
