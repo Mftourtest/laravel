@@ -275,6 +275,80 @@ class TableController extends Controller
         //     ->with('desk_sn',$desk_sn)->with(['total_price'=>$total_price,'discount_price'=>$discount_price,'last_price'=>$last_price])
         //     ->with(['srv_price'=>$srv_price,'tax_price'=>$tax_price])->with("is_print",$is_print);
      }
+     //订单-今天统计返回今天订单数
+      public function today_orders(Request $request) {
+        //根据传入的参数判断获取日还是月还是周
+        $mark = $request->input("mark");
+        if($mark=="day") {
+         //获取当天凌晨0:00的时间戳
+            // $today = strtotime(date('Y-m', time()));
+            
+            $today = strtotime(date('Y-m-d', time()));
+        }elseif ($mark=="week") {
+            $today = time()-(60*60*24*7);
+        }elseif($mark=="month"){
+
+            $today = strtotime(date('Y-m', time()));
+        }else{
+            return $this->json_encode(2,"参数传入错误","");
+        }
+            // echo date("Y-m-d H:i:s",$today);die;
+            // echo $today;
+         //获取partner_id
+            $p_id = $request->input("partner_id");
+         $pinfo = Partner::find($p_id);
+         //获取order_temp下面的今日的所有的下单未结账订单和已结账订单
+            $order_temps = DB::table('order_temp')->where('partner_id',$p_id)
+                                             ->where('create_time','>',$today)->get()->toArray();
+            if(empty($order_temps)) return $this->json_encode(0,"没有订单","");
+          //遍历所有的订单相同的订单号放到一起
+          $orders = [];
+          foreach ($order_temps as $k => $v) {
+              $orders[$v->temp_order_no][] = $v;
+          }
+         //返回数据到前台
+         $dorders_info = [];
+         foreach ($orders as $k => $v) {
+                    //计算每一个订单的价格
+                    $total_price= 0;
+                    foreach($v as $kk=>$vv) {
+                    $total_price =  $vv->price * $vv->number + $total_price;
+                    }
+                    $srv_price = $total_price * $pinfo->fee_srv; //服务费
+                    $tax_price = $total_price * $pinfo->fee_tax; //税费
+                    $discount_price = $total_price * (1 - $pinfo->discount);    //打折要减去的价格
+                    // if($total_price-$discount_price+$srv_price+$tax_price>=$enomination){ //如果打折后价格大于代金券的价格
+                    //     $last_price = round($total_price - $discount_price + $srv_price + $tax_price - $enomination);    //最终应付价格
+                    // }
+                    // else{
+                    //     $last_price = 0;
+                    // }
+                     $last_price = $total_price - $discount_price + $srv_price + $tax_price;    //最终应付价格
+                     $dorders_info[$k]["yingshou_price"] = $last_price;
+                     $dorders_info[$k]["order_price"] = $total_price;
+                     $dorders_info[$k]["time"] = $v[0]->create_time;
+                     $dorders_info[$k]["no"] = $k;
+                     $dorders_info[$k]["status"] =$v[0]->state;
+         }
+         //进行合计
+         $heji = [];
+         $heji['num']= count($dorders_info);
+         $order_price = 0;
+         $yingshou_price = 0;
+         foreach ($dorders_info as $k => $v) {
+             $order_price = $v['order_price']+$order_price;
+             $yingshou_price = $v['yingshou_price']+$yingshou_price;
+         }
+         $heji['order_price'] = $order_price;
+         $heji['yingshou_price'] = $yingshou_price;
+         //总结数据
+         $data = [];
+         $data['orders'] = $dorders_info;
+         $data['orders_tongji'] = $heji;
+         return $this->json_encode(1,"查询成功",$data);
+
+           
+      }
     //接口注册，暂时不写
     public function register(Request $request) {
          // $userID = 'admin3';
@@ -366,52 +440,7 @@ class TableController extends Controller
     //     return view('waiter/index')->with("lang",$this->lang)->with('cookies',$cookies);
     // }
 
-    //带验证登陆
-    public function login_validator()
-    {
-        //$lang = $_GET['lang'];
-        if($input = Input::all()){
-            //验证提交的数据  
-            $rules = [  
-                'account'=>'required|between:1,20',  
-                'password'=>'required|between:1,50'
-            ];  
-            $message = [  
-                'account.required'=>'account not null！',  
-                'account.between'=>'账号必须在1-20位之间！',  
-                'password.required'=>'password not null！',  
-                'password.between'=>'密码必须在1-50位之间！'
-            ];  
-            $validator = Validator::make($input,$rules,$message);  
-            //表单验证  
-            if($validator->passes()){  
-                //用户验证  
-                $admininfo = PartnerAdmin::where('account',$input['account'])->first(); //查询数据库用户名是否存在
-                if(!$admininfo){  
-                    return back()->with('msg','用户不存在！');  
-                }else{  
-                    $psw = $admininfo->password;
-                    if($psw!=$input['password']){  
-                        return back()->with('msg','密码错误！');  
-                    } 
-                    else{
-                        $pinfo = Partner::find($admininfo->partner_id);
-                        session(['partner_id'=>$admininfo->partner_id,'partner_name'=>$pinfo->title,'user_id'=>$admininfo->id]); 
-                        //如果登录成功就把账号密码存入cookie
-                        Cookie::queue('account', $input['account'], 10080); //视图自动响应
-                        Cookie::queue('password', $input['password'], 10080); //cookie保存一周
-                        return redirect('waiter/table?lang='.$this->lang); 
-                    } 
-               }  
-            }else{  
-                return back()->withErrors($validator);  
-            }  
-        }
-        else{
-            return view('waiter/index')->with("lang",$lang);;  
-        }
-    }
-
+   
     //获取餐厅区域桌位信息
     // public function desk_info()
     // {
