@@ -105,6 +105,7 @@ Route::any('login', 'Cashier\TableController@login');
 //注册
 Route::any('register', 'Cashier\TableController@register');
 //接口路由
+
 Route::group(['middleware'=>'logins','prefix' => 'cashier'],function() {
             Route::any('room', 'Cashier\TableController@room');//返回餐厅房间信息
             Route::any('table', 'Cashier\TableController@table');//返回房间桌位信息
@@ -114,5 +115,8 @@ Route::group(['middleware'=>'logins','prefix' => 'cashier'],function() {
             Route::any('edit_coupon', 'Cashier\TableController@edit_coupon');//桌台-修改商家优惠
             Route::any('edit_stock', 'Cashier\CashierController@edit_stock');//修改食品库存
             Route::any('test', 'Cashier\CashierController@test');//测试
+            Route::any('paymoney_info', 'Cashier\TableController@paymoney_info');//桌台-未结账返回结账信息页
+            Route::any('voucher', 'Cashier\TableController@voucher');//团购-验证团购套餐，成功返回套餐名
+
 });
 
