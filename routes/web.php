@@ -113,10 +113,10 @@ Route::group(['middleware'=>'logins','prefix' => 'cashier'],function() {
             Route::any('print', 'Cashier\TableController@print_order');//打印厨房下单
             Route::any('food_info', 'Cashier\TableController@food_info');//点餐-获取所有商户菜单分类和菜和规格
             Route::any('edit_coupon', 'Cashier\TableController@edit_coupon');//桌台-修改商家优惠
-            Route::any('edit_stock', 'Cashier\CashierController@edit_stock');//修改食品库存
-            Route::any('test', 'Cashier\CashierController@test');//测试
+            Route::any('edit_stock', 'Cashier\CashierController@edit_stock');//修改食品库存 by xujin 
+            Route::any('test', 'Cashier\CashierController@test');//测试 by xujin 
             Route::any('paymoney_info', 'Cashier\TableController@paymoney_info');//桌台-未结账返回结账信息页
             Route::any('voucher', 'Cashier\TableController@voucher');//团购-验证团购套餐，成功返回套餐名
-
+            Route::any('add_print', 'Cashier\CashierController@add_print');//添加打印机 by xujin 
 });
 

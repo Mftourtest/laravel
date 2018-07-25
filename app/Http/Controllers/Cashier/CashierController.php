@@ -47,7 +47,7 @@ class CashierController extends Controller
     }
     
     //添加前台打印机
-    public function add_fprint(Request $request){
+    public function add_print(Request $request){
         $prints = $request->all(); //要添加的打印机数据
         $result = DB::table('printer')
             ->insert(['pr_sn' => $prints['pr_sn'],
@@ -70,6 +70,7 @@ class CashierController extends Controller
     {
         $prints = $request->all(); 
         print_r($prints);
+        echo $prints['token'];
     }
     
 }
