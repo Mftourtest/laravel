@@ -277,8 +277,22 @@ class TableController extends Controller
      }
      //订单-今天统计返回今天订单数
       public function today_orders(Request $request) {
+        //根据传入的参数判断获取日还是月还是周
+        $mark = $request->input("mark");
+        if($mark=="day") {
          //获取当天凌晨0:00的时间戳
+            // $today = strtotime(date('Y-m', time()));
+            
             $today = strtotime(date('Y-m-d', time()));
+        }elseif ($mark=="week") {
+            $today = time()-(60*60*24*7);
+        }elseif($mark=="month"){
+
+            $today = strtotime(date('Y-m', time()));
+        }else{
+            return $this->json_encode(2,"参数传入错误","");
+        }
+            // echo date("Y-m-d H:i:s",$today);die;
             // echo $today;
          //获取partner_id
             $p_id = $request->input("partner_id");
