@@ -19,7 +19,7 @@ use App\Lib\Common\Helper;
 use App\Lib\Common\Printer;
 use App\Lib\Common\NewPrinter;
 use App\Models\Order;
-
+use App\Models\Coupon;
 class TableController extends Controller
 {
     private $lang;
@@ -935,31 +935,52 @@ class TableController extends Controller
             ->with('desk_sn',$desk_sn);
     }
 
-    //验证团购券
+    //团购-验证团购套餐，成功返回套餐名
     public function voucher(Request $request)
     {
-        $p_id = session('partner_id');
-        if(empty($p_id)){
-            return redirect('waiter/index?lang='.$this->lang);
+       //获取partner_id
+         $p_id = $request->input("partner_id");
+         $id = $request->input("voucher_id");
+         if(!isset($id)) return $this->json_encode(0,"验证号码不存在","");
+       //进行验证团购套餐
+        $coupon = Coupon::where(['id' => $id,'partner_id'=>$p_id])->first()->toArray();
+        if($coupon['consume'] == 'Y') return $this->json_encode(1,"团购券已消费","");
+        if ( $coupon['expire_time'] < time()) return $this->json_encode(2,"团购券已过期","");
+        $order_id = $coupon['order_id'];
+        //去orderteam表里面查询packgeid
+        $packege_id = DB::table('orderteam')->where('id',$order_id)->first()->packageid;
+        if(empty($packege_id)) return $this->json_encode(3,"没有套餐","");
+        //t通过packageid 去product_price表里面查询
+            // 修改数据库信息  
+                //获取客户端ip
+                $ip = $request->getClientIp();
+                //获取消费时间
+                $time = time();
+     DB::table('coupon')->where('id',$id)->update(['ip' => $ip,'consume_time'=>$time,'consume'=>"Y"]);
+    $data = $packege_id = DB::table('product_price')->where('id',$packege_id)->first();
+        if($data) {
+            return $this->json_encode(4,"查询成功",$data);
+            
+         
+        }else{
+            return $this->json_encode(5,"查询失败","");
+           
+
         }
-        $desk_sn = $_GET['desk_sn'];
-        $id = Input::get('voucher_id');
-        if(!empty($id)){
-            $op = 'foods_team'; //团购验券固定数据
-            $res = Helper::voucher($id, $op, $request->getClientIp());
-            if($res['msg']=="验证成功"){
-                $update_row = DB::table('food_area_desk')
-                              ->where('partner_id',$p_id)
-                              ->where('desk_sn',$desk_sn)
-                              ->update(['desk_state'=>2]);                
-            }
-            return view('waiter/voucher')->with("lang",$this->lang)->with("res",$res)
-            ->with('desk_sn',$desk_sn);
-        }
-        else{
-            return view('waiter/voucher')->with("lang",$this->lang)->with("voucher_id",$id)
-            ->with('desk_sn',$desk_sn);
-        }
+        // dump($data);die;
+        // echo $packege_id;die;
+            // $op = 'foods_team'; //团购验券固定数据
+            // $res = Helper::voucher($id, $op, $request->getClientIp());
+            // if($res['msg']=="验证成功"){
+            //     $update_row = DB::table('food_area_desk')
+            //                   ->where('partner_id',$p_id)
+            //                   ->where('desk_sn',$desk_sn)
+            //                   ->update(['desk_state'=>2]);                
+            // }
+        //     return view('waiter/voucher')->with("lang",$this->lang)->with("res",$res)
+        //     ->with('desk_sn',$desk_sn);
+        // }
+       
     }
 
     //整体打折
