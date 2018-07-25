@@ -286,6 +286,7 @@ class TableController extends Controller
          //获取order_temp下面的今日的所有的下单未结账订单和已结账订单
             $order_temps = DB::table('order_temp')->where('partner_id',$p_id)
                                              ->where('create_time','>',$today)->get()->toArray();
+            if(empty($order_temps)) return $this->json_encode(0,"没有订单","");
           //遍历所有的订单相同的订单号放到一起
           $orders = [];
           foreach ($order_temps as $k => $v) {
