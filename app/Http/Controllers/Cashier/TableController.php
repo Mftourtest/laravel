@@ -943,7 +943,9 @@ class TableController extends Controller
          $id = $request->input("voucher_id");
          if(!isset($id)) return $this->json_encode(0,"验证号码不存在","");
        //进行验证团购套餐
-        $coupon = Coupon::where(['id' => $id,'partner_id'=>$p_id])->first()->toArray();
+        $coupon = Coupon::where(['id' => $id,'partner_id'=>$p_id])->first();
+        if(empty($coupon)) return $this->json_encode(6,"团购号不存在","");
+        $coupon =$coupon->toArray(); 
         if($coupon['consume'] == 'Y') return $this->json_encode(1,"团购券已消费","");
         if ( $coupon['expire_time'] < time()) return $this->json_encode(2,"团购券已过期","");
         $order_id = $coupon['order_id'];
