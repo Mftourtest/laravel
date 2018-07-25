@@ -118,5 +118,6 @@ Route::group(['middleware'=>'logins','prefix' => 'cashier'],function() {
             Route::any('paymoney_info', 'Cashier\TableController@paymoney_info');//桌台-未结账返回结账信息页
             Route::any('voucher', 'Cashier\TableController@voucher');//团购-验证团购套餐，成功返回套餐名
             Route::any('add_print', 'Cashier\CashierController@add_print');//添加打印机 by xujin 
+            Route::any('all_printer', 'Cashier\CashierController@all_printer');//添加打印机 by xujin
 });
 

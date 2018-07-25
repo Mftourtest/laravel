@@ -51,7 +51,6 @@ class CashierController extends Controller
         $prints = $request->all(); //要添加的打印机数据
         $result = DB::table('printer')
             ->insert(['pr_sn' => $prints['pr_sn'],
-                      'pr_key' => $prints['pr_key'],
                       'pr_lang' => $prints['pr_lang'],
                       'number' => $prints['number'],
                       'partner_id' => $prints['partner_id'],
@@ -63,6 +62,19 @@ class CashierController extends Controller
         }
         else{
             return $this->json_encode(0,"添加失败","");
+        }
+    }
+
+    //获取商户所有打印机信息
+    public function all_printer(Request $request)
+    {
+        $inputs = $request->all(); 
+        $allprints = DB::table('printer')->where("partner_id",$inputs['partner_id'])->get()->toArray();
+        if($allprints){
+            return $this->json_encode(1,"查询成功",$allprints);
+        }
+        else{
+            return $this->json_encode(0,"查询失败","");
         }
     }
 
