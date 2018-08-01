@@ -202,37 +202,30 @@ class TableController extends Controller
         //根据传入的参数判断获取日还是月还是周
         $mark = $request->input("mark");
         if($mark=="day") {
-         //获取当天凌晨0:00的时间戳
-            // $today = strtotime(date('Y-m', time()));
-            
-            $today = strtotime(date('Y-m-d', time()));
+        //获取当天凌晨0:00的时间戳  
+        $today = strtotime(date('Y-m-d', time()));
         }elseif ($mark=="week") {
             $today = time()-(60*60*24*7);
         }elseif($mark=="month"){
-
             $today = strtotime(date('Y-m', time()));
         }else{
             return $this->json_encode_nodata(2,"参数传入错误");
         }
-            // echo date("Y-m-d H:i:s",$today);die;
-            // echo $today;
-         //获取partner_id
+        //获取partner_id
         $p_id = $request->input("partner_id");
         $pinfo = Partner::find($p_id);
-         //获取order_temp下面的已结账订单和已取消订单
+        //获取order_temp下面的已结账订单和已取消订单
         $order_temps = DB::table('order_temp')->where('partner_id',$p_id)->where('create_time','>=',$today)
         ->where('state','>',0)->where('state','<',3)->get();
-
         //dd($order_temps);exit;
         if($order_temps->isEmpty()) return $this->json_encode_nodata(0,"没有订单");
-          //遍历所有的订单相同的订单号放到一起
+        //遍历所有的订单相同的订单号放到一起
         $orders = [];
         foreach ($order_temps as $k => $v) {
               $orders[$v->temp_order_no][] = $v;
         }
-         //返回数据到前台
-         $dorders_info = [];
-
+        //返回数据到前台
+        $dorders_info = [];
         foreach ($orders as $k => $v) {
                     //计算每一个订单的价格
                     $total_price= 0;
@@ -255,6 +248,12 @@ class TableController extends Controller
                      $dorders_info[$k]['temp_order_no'] = $k;
                      $dorders_info[$k]['moling'] = round($last_price-round($last_price),2);
                      $dorders_info[$k]['state'] =$v[0]->state;
+                     if($v[0]->state==1){
+                        $dorders_info[$k]['state_name'] = "已结账";
+                     }
+                     else{
+                        $dorders_info[$k]['state_name'] = "已撤单";
+                     }
          }
          //进行合计
         $heji = [];
@@ -270,6 +269,7 @@ class TableController extends Controller
              $arr[$i]['yingshou_price'] = $v['yingshou_price'];
              $arr[$i]['moling'] = $v['moling'];
              $arr[$i]['state'] = $v['state'];
+             $arr[$i]['state_name'] = $v['state_name'];
              $order_price += $arr[$i]['order_price'];
              $yingshou_price += $arr[$i]['yingshou_price'];
              $i = $i+1;
@@ -282,10 +282,9 @@ class TableController extends Controller
         $data['msg'] = "查询成功";
         $data['heji'] = $heji;
         $data['data'] = $arr;
-        return json_encode($data,JSON_UNESCAPED_UNICODE);
+        return json_encode($data,JSON_UNESCAPED_UNICODE);        
+    }
 
-           
-      }
     //接口注册，暂时不写
     public function register(Request $request) {
          // $userID = 'admin3';
