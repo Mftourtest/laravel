@@ -14,6 +14,7 @@ class Controller extends BaseController
      * 返回json数据
      * @param int $status  返回状态
      * @param  $msg (array  string int) 返回信息
+     * @param  $data (array ) 返回数组
      * @return string
      */
     public function json_encode($status, $msg, $data)
@@ -24,6 +25,21 @@ class Controller extends BaseController
         $json = json_encode($arr,JSON_UNESCAPED_UNICODE);
         return $json;
     }
+
+      /**
+     * 返回json数据
+     * @param int $status  返回状态
+     * @param  $msg (array  string int) 返回信息
+     * @return string
+     */
+    public function json_encode_nodata($status, $msg)
+    {
+        $arr['code']  = $status;
+        $arr['msg'] = $msg;
+        $json = json_encode($arr,JSON_UNESCAPED_UNICODE);
+        return $json;
+    }
+
     //生成token方法代码
     public static function setToken()
     {
