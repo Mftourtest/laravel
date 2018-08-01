@@ -217,6 +217,56 @@ class CashierController extends Controller
         }
     }
 
+    //按时间范围查询订单信息
+    public function select_orders(Request $request)
+    {
+        $p_id = $request->input("partner_id");
+        $start_time = $request->input("start_time");
+        $end_time = $request->input("end_time");
+        $pinfo = Partner::find($p_id);
+        //获取order_temp下面的已结账订单和已取消订单
+        $order_temps = DB::table('order_temp')->where('partner_id',$p_id)->where('create_time','>=',$start_time)
+        ->where('create_time','<=',$end_time)->whereIn('state',[1,2])->get();
+        //dd($order_temps);exit;
+        if($order_temps->isEmpty()) return $this->json_encode_nodata(0,"没有订单");
+        //遍历所有的订单相同的订单号放到一起
+        $orders = [];
+        foreach ($order_temps as $k => $v) {
+              $orders[$v->temp_order_no][] = $v;
+        }
+        //返回数据到前台
+        $dorders_info = [];
+        foreach ($orders as $k => $v) {
+                    //计算每一个订单的价格
+                    $total_price= 0;
+                    foreach($v as $kk=>$vv) {
+                    $total_price =  $vv->price * $vv->number + $total_price;
+                    }
+                    $srv_price = $total_price * $pinfo->fee_srv; //服务费
+                    $tax_price = $total_price * $pinfo->fee_tax; //税费
+                    $discount_price = $total_price * (1 - $pinfo->discount);    //打折要减去的价格
+                    // if($total_price-$discount_price+$srv_price+$tax_price>=$enomination){ //如果打折后价格大于代金券的价格
+                    //     $last_price = round($total_price - $discount_price + $srv_price + $tax_price - $enomination);    //最终应付价格
+                    // }
+                    // else{
+                    //     $last_price = 0;
+                    // }
+                     $last_price = $total_price - $discount_price + $srv_price + $tax_price;    //最终应付价格
+                     $dorders_info[$k]['yingshou_price'] = $last_price;
+                     $dorders_info[$k]['order_price'] = $total_price;
+                     $dorders_info[$k]['time'] = $v[0]->create_time;
+                     $dorders_info[$k]['temp_order_no'] = $k;
+                     $dorders_info[$k]['moling'] = round($last_price-round($last_price),2);
+                     $dorders_info[$k]['state'] =$v[0]->state;
+                     if($v[0]->state==1){
+                        $dorders_info[$k]['state_name'] = "已结账";
+                     }
+                     else{
+                        $dorders_info[$k]['state_name'] = "已撤单";
+                     }
+                    }
+    }
+
     //结账
     public function payment(Request $request)
     {
