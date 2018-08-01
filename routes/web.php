@@ -107,19 +107,23 @@ Route::any('register', 'Cashier\TableController@register');
 //接口路由
 
 Route::group(['middleware'=>'logins','prefix' => 'cashier'],function() {
-            Route::any('room', 'Cashier\TableController@room');//返回餐厅房间信息
-            Route::any('table', 'Cashier\TableController@table');//返回房间桌位信息
-            Route::any('order', 'Cashier\TableController@order');//点击桌号返回订单信息
-            Route::any('print', 'Cashier\TableController@print_order');//打印厨房下单
-            Route::any('food_info', 'Cashier\TableController@food_info');//点餐-获取所有商户菜单分类和菜和规格
-            Route::any('edit_coupon', 'Cashier\TableController@edit_coupon');//桌台-修改商家优惠
-            Route::any('edit_stock', 'Cashier\CashierController@edit_stock');//修改食品库存 by xujin 
-            Route::any('test', 'Cashier\CashierController@test');//测试 by xujin 
-            Route::any('paymoney_info', 'Cashier\TableController@paymoney_info');//桌台-未结账返回结账信息页
-            Route::any('voucher', 'Cashier\TableController@voucher');//团购-验证团购套餐，成功返回套餐名
-            Route::any('today_orders', 'Cashier\TableController@today_orders');//订单-今天统计返回今天订单数
-            Route::any('add_print', 'Cashier\CashierController@add_print');//添加打印机 by xujin 
-            Route::any('all_printer', 'Cashier\CashierController@all_printer');//添加打印机 by xujin
-
+    Route::any('room', 'Cashier\TableController@room');//返回餐厅房间信息
+    Route::any('table', 'Cashier\TableController@table');//返回房间桌位信息
+    Route::any('order', 'Cashier\TableController@order');//点击桌号返回订单信息
+    Route::any('print', 'Cashier\TableController@print_order');//打印厨房下单
+    Route::any('food_info', 'Cashier\TableController@food_info');//点餐-获取所有商户菜单分类和菜和规格
+    Route::any('edit_coupon', 'Cashier\TableController@edit_coupon');//桌台-修改商家优惠
+    Route::any('edit_stock', 'Cashier\CashierController@edit_stock');//修改食品库存 by xujin 
+    Route::any('test', 'Cashier\CashierController@test');//测试 by xujin 
+    Route::any('paymoney_info', 'Cashier\TableController@paymoney_info');//桌台-未结账返回结账信息页
+    Route::any('voucher', 'Cashier\TableController@voucher');//团购-验证团购套餐，成功返回套餐名
+    Route::any('today_orders', 'Cashier\TableController@today_orders');//订单-今天统计返回今天订单数
+    Route::any('add_print', 'Cashier\CashierController@add_print');//添加打印机 by xujin 
+    Route::any('all_printer', 'Cashier\CashierController@all_printer');//查看商户打印机 by xujin
+    Route::any('place_order', 'Cashier\CashierController@place_order');//收银台下单 by xujin
+    Route::any('cancel_order', 'Cashier\CashierController@cancel_order');//撤单 by xujin
+    Route::any('add_food', 'Cashier\CashierController@add_food');//加菜 by xujin
+    Route::any('refund', 'Cashier\CashierController@refund');//退菜 by xujin
+    Route::any('payment', 'Cashier\CashierController@payment');//结账 by xujin
 });
 

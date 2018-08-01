@@ -240,6 +240,16 @@ class RestaurantController extends Controller
         $goods = $input['goods'];
         $partner_object = DB::table('partner')->where('id',$p_id)->first();
         $partner = $this->objectToArray($partner_object);
+        //创建下单订单号
+        $temp_order_id = 1000+$p_id;
+        if($desk_sn<10){
+            $desksn = '0'.$desk_sn;
+        }
+        else{
+            $desksn = $desk_sn;
+        }
+        $temp_order_id .= $desksn;
+        $temp_order_id .= $time;
         foreach($goods as $i=>$good){
              //判断food_id里有没有下滑线
             if(strpos($good['id'],'_')){
@@ -260,7 +270,8 @@ class RestaurantController extends Controller
                       'number' => $good['num'],
                       'price' => $good['price'],
                       'create_time' => $time,
-                      'remark' => $input['remark']
+                      'remark' => $input['remark'],
+                      'temp_order_no' => $temp_order_id
                       ]);
             $foodinfo = DB::table('food')->where('id',$good_id)->first();
             $foodcate = DB::table('food_cate')->where('id',$foodinfo->cate_id)->first();
@@ -485,7 +496,7 @@ class RestaurantController extends Controller
         }
         //将临时单order_id转为生成订单id
         if(!empty($order_id)){
-            DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['order_id'=>$order_id]); 
+            DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['order_id'=>$order_id,'state'=>1]); 
         }    
         //测试将临时单order_id =1
        // DB::table('order_temp')->where('partner_id',$p_id)->where('desk_sn',$desk_sn)->update(['order_id'=>1]);
