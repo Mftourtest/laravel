@@ -125,6 +125,7 @@ Route::group(['middleware'=>'logins','prefix' => 'cashier'],function() {
     Route::any('add_food', 'Cashier\CashierController@add_food');//加菜 by xujin
     Route::any('refund', 'Cashier\CashierController@refund');//退菜 by xujin
     Route::any('payment', 'Cashier\CashierController@payment');//结账 by xujin
-    Route::any('select_orders', 'Cashier\CashierController@select_orders');//结账 by xujin
+    Route::any('select_orders', 'Cashier\CashierController@select_orders');//按时间范围查询订单 by xujin
+    Route::any('order_detail', 'Cashier\CashierController@order_detail');//订单详情 by xujin
 });
 

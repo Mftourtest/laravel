@@ -380,12 +380,12 @@
                                         <h4 class="modal-title">@lang('foods.waiter_menu')</h4>
                                     </div>
                                     <div class="modal-body">
-<<<<<<< HEAD
+
                                          <p>One fine body&hellip;</p>
                                         <span class="label label-default">Default</span>
-=======
+
                                          <!-- <p>One fine body&hellip;</p> -->
-                                         <input type="text" name="">
+                                        
                                        <!--  <span class="label label-default">Default</span>
 >>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
                                         <span class="label label-primary">Primary</span>
@@ -411,10 +411,10 @@
 
                                     </div>
                                     <div class="modal-footer">
-                                        <div class="modal-price">111</div>
+                                        <div class="modal-price"></div>
                                         <button id="toCart" type="button" class="btn btn-primary" style="display: none;" disabled>加入购物车</button>
                                         <div class="calc calc2 modal-pm" data-id="" data-title="" data-price="" >
->>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
+
                                             <span class="glyphicon glyphicon-minus-sign icon-color2" style="opacity: 0;"></span>
                                             <div class="num">0</div>
                                             <span class="glyphicon glyphicon-plus-sign icon-color2"></span>
@@ -674,8 +674,8 @@
             })
         });
 
-<<<<<<< HEAD
-=======
+// <<<<<<< HEAD
+// =======
         $(".seafood").on("click", function (e) {
             $(".modal-body").empty();
             // $(".calc2").hide();
@@ -687,6 +687,7 @@
                 if (i == 0) {
                     $(".modal-price").html($(this).attr("data-price"));
                 } //' + (i==0?'label-primary':'label-info') + '
+                console.log($('.seafood').text());
                 $label = '<span class="label label-info label1" data-id="' + $(this).attr("data-id") + '" data-price="' + $(this).attr("data-price") + '" all-name="' + $(this).attr("all-name") +'">' + $(this).attr("data-name") + '</span>\n';
                 // $label = '<input type="text" name="" data-price="' + $(this).attr("data-price")'" />';
                 $(".modal-body").append($label);
@@ -694,7 +695,7 @@
         });
 
 
->>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
+// >>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
         // 规格标签点击 label1
         $(".modal-body").on("click", ".label1", function (e) {
             var id = $(this).attr("data-id");
@@ -847,14 +848,14 @@
         });
 
 		</script>
-<<<<<<< HEAD
-=======
+<!-- <<<<<<< HEAD
+======= -->
 		<script type="text/javascript">
 			$(".pack").click(function(){
 				console.log($('.shopprice').html());
 			})
 		</script>
->>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
+<!-- >>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8 -->
 	</body>
 
 </html>
