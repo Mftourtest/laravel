@@ -38,6 +38,7 @@ class TableController extends Controller
         }
         date_default_timezone_set("Asia/Bangkok"); //系统时间设成泰国时区时间
     }
+
     //返回餐厅的房间信息
     public function room(Request $request) {
         $partner_id = $request->input("partner_id");
@@ -317,19 +318,14 @@ class TableController extends Controller
         //     Response::json(406,"读取数据失败");
         // }
     }
+
     //接口登陆
     public function login(Request $request) {
-         // $_POST['userID']='admin1';
-        // $_POST['userPwd']='123456';
         $username = $request->input("userName");
         $userpwd = $request->input("userPwd");
-        // echo $_POST['userID'];die;
         if(empty($username) || empty($userpwd)){
             return $this->json_encode(0,"请输入账号和密码");
         }
-        // $userID=$_POST['userID'];
-        // $userPwd=$_POST['userPwd'];
-        // $userpwd=md5($userpwd);
         $token = $this->setToken();
         // echo $token;die;
         // $time_out = strtotime("+7 days");
@@ -342,19 +338,18 @@ class TableController extends Controller
             // exit;
             return $this->json_encode_nodata(1,"账号或密码输入错误");
         }else{
-            //更新token到数据库
+            //更新token到数据库,更新登陆时间
             $data['token']=$token;
-             //$num = DB::table('partner_admin')->where('id', $data[0]->id)->update(['token' => $token]);
-             $num = 1;
-             if($num==1) {
-                    session(['username'=>$data[0]->account]);
-                    session(['id'=>$data[0]->id]);
-                    return $this->json_encode(2,"登陆成功",$data[0]);
-             }else{
-                $data = object();
-                    return $this->json_encode(3,"未知错误",$data);
+            //$num = DB::table('partner_admin')->where('id', $data[0]->id)->update(['token' => $token,'login_time'=>time()]);
+            $num = 1;
+            if($num==1) {
+                //session(['username'=>$data[0]->account]);
+                //session(['id'=>$data[0]->id]);
+                return $this->json_encode(2,"登陆成功",$data[0]);
+            }else{
+                return $this->json_encode_nodata(3,"未知错误");
 
-             }
+            }
 
         }
 
@@ -388,7 +383,7 @@ class TableController extends Controller
         // dump($arr);die;
         //根据当前的菜品种类获取所有的菜信息
         $foods = [];
-        $food =  DB::table('food')->select('id', 'team_id','cate_id','food_no','title','title_en','title_vi','price','display_order','pack','status')->where('team_id',$arr[0]['team_id'])->orderBy('display_order','desc')->get()->map(function ($value) {
+        $food =  DB::table('food')->select('id', 'team_id','cate_id','food_no','title','title_en','title_vi','price','display_order','pack','status','stock')->where('team_id',$arr[0]['team_id'])->orderBy('display_order','desc')->get()->map(function ($value) {
             return (array)$value;
         })->toArray();
         //每次遍历所有的食物获取套餐

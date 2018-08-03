@@ -23,73 +23,48 @@ class CashierPrinter {
 
     /**
      * 收银台订单详情打印
-     * @param $partner
-     * @param $orderinfo
+     * @param $order
      * @param $foodinfos
      */
-    public static function orderPrint($partner, $orderinfo, $foodinfos)
+    public static function orderPrint($order, $foodinfos)
     {
-        list($lang, $count, $orderInfo) = self::headerPrint($partner,$order);
+        list($lang, $count, $orderInfo) = self::headerPrint($order); //头部打印信息
 
         $footData = array(
-            'timezone'  => $partner['timezone'],
-            'discount'  => $partner['discount'],
-            'discount_num' => 0,
-            'coupon'    => 0,
-            'cost'      => 0,
-            'feeTax'    => 0,
-            'feeSrv'    => 0,
-            'amount'    => 0.00,
-            'deskSn'    => '',
-            'service'   => $order['service'],
-            'remark'    => $order['remark'],
+            'timezone'       => $order['timezone'], //时区
+            'discount_price' => $order['discount_price'], //折扣金额
+            'cost'           => $order['coupon'], //代金券金额
+            'tax_price'      => $order['tax_price'], //税费
+            'srv_price'      => $order['srv_price'], //服务费
+            'temp_order_no'  => $order['temp_order_no'], //订单编号
+            'create_time'    => $order['create_time'], //下单时间
+            'service'        => $order['service'],   //支付方式
+            'remark'         => $order['remark'],    //订单备注
+            'source'         => $order['source'],    //下单人账号
+            'order_price'    => $order['order_price'],//订单金额
+            'last_price'     => $order['last_price'], //应收金额
+            'small_price'    => $order['small_price'], //抹零金额
+            'coupon'         => 0                      //优惠券金额
         );
-
         $suffix = '_'.$lang;
         foreach ($foodinfos as $i=>$food) {
-            $package = unserialize($ot['package']);
-            //$footData['deskSn'] = $package['desk_sn'];
             $arr[$i] = array(
-                'title'  => $package['title' . $suffix],
-                'price'  => $ot['price'],
-                'num'    => $ot['quantity'],
-                'prices' => $ot['price'] * $ot['quantity']
+                'title'  => $food['title' . $suffix],
+                'num'    => floor($food['number']),
+                'prices' => $food['price']
             );
         }
-
-        if ($lang == 'vi') {
-            list($info, $nums) = self::typeSetting3($arr, 21, 3, 6);
-        } else {
-            list($info, $nums) = self::typeSetting($arr, 14, 7, 3, 6);
-        }
-        $footData['feeTax'] += round($partner['fee_tax'] * $nums);
-        $footData['feeSrv'] += round($partner['fee_srv'] * $nums);
-        $footData['discount_num'] += round((1-$footData['discount']) * $nums); //打折金额
-        $footData['coupon'] += $order['coupon'];  //优惠券
-        $footData['cost'] += $order['cost'];     //代金券
-        $footData['amount'] = $nums - $footData['discount_num'] + $footData['feeTax'] + $footData['feeSrv'] - $footData['cost'] - $footData['coupon'];
-        
+       // if ($lang == 'vi') {
+        list($info, $nums) = self::typeSetting3($arr, 23, 2, 5);
+       // } else {
+       //     list($info, $nums) = self::typeSetting($arr, 14, 7, 3, 6);
+       // }   
         $orderInfo .= $info;
-
         $orderInfo .= self::footerPrint($footData);
-
-
-        if (!empty($partner['pr_sn_desk'])) {
-            $rules =  explode('#', $partner['pr_sn_desk']);
-            foreach ($rules as $rule) {
-                list($d1, $d2, $pn, $c) = explode('-', $rule);
-                if ($footData['deskSn'] >= $d1 && $footData['deskSn'] <= $d2) {
-                    for ($i=0; $i<$c; $i++) {
-                        self::wpPrint($pn, $orderInfo, 1);
-                    }
-                    break;
-                }
-            }
-        } else {
-            for ($i=0; $i<$count; $i++) {
-                self::wpPrint($partner['pr_sn'], $orderInfo, 1);
-            }
+        for ($i=0; $i<$count; $i++) {
+            self::wpPrint($order['pr_sn'], $orderInfo, 1);
         }
+        
     }
 
 
@@ -181,23 +156,25 @@ class CashierPrinter {
      * @param $partner
      * @return array
      */
-    public static function headerPrint($partner,$order)
+    public static function headerPrint($order)
     {
-        $prLang = explode('@@@@', $partner['pr_lang']);
-        $lang   = $prLang[0] ? $prLang[0] : 'en_us';
-        $count  = $prLang[0] ? $prLang[1] : 2;
+        $lang   = $order['lang'];
+        $count  = $order['count'];
         
         App::setLocale($lang);
-        if($order['type']=='order'){
+        if($order['type']=='order'){     //下单
             $type = __('foods.waiter_single_summary');
         }
-        else if($order['type']=='cash'){
+        else if($order['type']=='cash'){  //结账
             $type = __('foods.waiter_checkout_summary');
         }
-        else if($order['type']=='cancel'){
+        else if($order['type']=='cancel'){ //退菜
             $type = __('foods.waiter_collection_vegetables');
         }
-        $orderInfo = '<C><BOLD>'.$partner['title'].'</BOLD></C><BR>';
+        else if($order['type']=='del'){ //撤单
+            $type = "已撤单";
+        }
+        $orderInfo = '<C><BOLD>'.$order['title'].'</BOLD></C><BR>';
         $orderInfo .= '<C><B>'.__('foods.waiter_table_no').'：'.$order['desk_sn'].'</B></C><BR>';
         $orderInfo .= '<C><B>'.$type.'</B></C><BR>';
         $orderInfo .= '--------------------------------<BR>';
@@ -212,23 +189,27 @@ class CashierPrinter {
      */
     public static function footerPrint($data)
     {
+        $ordertime = date('Y-m-d H:i:s', $data['create_time']); //下单时间
+        $nowtime = date('Y-m-d H:i:s', time()); //打印时间
+        $moling_price = $data['last_price']-$data['small_price'];
         $orderInfo = '';
         $orderInfo .= '--------------------------------<BR>';
         $orderInfo .= __('foods.food_remark').'：'.$data['remark'].'<BR>';
         $orderInfo .= '--------------------------------<BR>';
-
-        $time = date('Y-m-d H:i:s', time());
-        $orderInfo .= "$time<BR>";
-        //$orderInfo .= "Table：#{$data['deskSn']}<BR>";
+        $orderInfo .= __('foods.biz_order_id')."：{$data['temp_order_no']}<BR>";
+        $orderInfo .= __('foods.biz_order_create_time')."：{$ordertime}<BR>";
+        $orderInfo .= __('foods.cashier_source')."：{$data['source']}<BR>";
         $orderInfo .= __('foods.food_pr_pay_type')."：{$data['service']}<BR>";
-        $orderInfo .= __('foods.food_tax')."：{$data['feeTax']}<BR>";
-        $orderInfo .= __('foods.food_charge')."：{$data['feeSrv']}<BR>";
-        $orderInfo .= __('foods.food_discount')."：-{$data['discount_num']}<BR>";
+        $orderInfo .= __('foods.cashier_order_price')."：{$data['order_price']}<BR>"; //订单价格
+        $orderInfo .= __('foods.food_tax')."：{$data['tax_price']}<BR>";
+        $orderInfo .= __('foods.food_charge')."：{$data['srv_price']}<BR>";
+        $orderInfo .= __('foods.food_discount')."：-{$data['discount_price']}<BR>";
         $orderInfo .= __('foods.food_coupon')."：-{$data['coupon']}<BR>"; //优惠券
         $orderInfo .= __('foods.waiter_cash_coupon')."：-{$data['cost']}<BR>";   //代金券
-        $orderInfo .= __('foods.food_pr_amount')."：{$data['amount']}<BR>";
+        $orderInfo .= __('foods.food_pr_amount')."：{$data['last_price']}<BR>";  //应收金额
+        $orderInfo .= __('foods.cashier_moling_price')."：{$moling_price}<BR>";  //抹零后金额
         $orderInfo .= '--------------------------------<BR>';
-        $orderInfo .= '<BR>';
+        $orderInfo .= '<C>Thank you very much</C><BR>';
         return $orderInfo;
     }
 
@@ -352,7 +333,7 @@ class CashierPrinter {
 
         foreach ($arr as $k5 => $v5) {
             $name = $v5['title'];
-            $price = $v5['price'];
+            //$price = $v5['price'];
             $num = $v5['num'];
             $prices = $v5['prices'];
             $kw1 = '';
@@ -412,7 +393,7 @@ class CashierPrinter {
                 }
                 $prices = $prices.$kw4;
             }
-            $orderInfo .= $num.' '.$prices.' '.$head.$tail.'<BR>';
+            $orderInfo .= $num.' '.$head.$tail.' '.$prices.'<BR>';
             @$nums += $prices;
         }
         return array($orderInfo, $nums);

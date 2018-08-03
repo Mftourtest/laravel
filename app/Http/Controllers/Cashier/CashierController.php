@@ -11,8 +11,7 @@ use App\Models\PartnerAdmin;
 use App\Models\Partner;
 use App\Models\FoodArea;
 use App\Models\FoodAreaDesk;
-use App\Lib\Common\Helper;
-use App\Lib\Common\NewPrinter;
+use App\Lib\Common\CashierPrinter;
 use App\Models\Order;
 
 class CashierController extends Controller
@@ -40,9 +39,10 @@ class CashierController extends Controller
         $food_id = $request->input("food_id"); //菜品id
         $result = DB::table('food')->where('id',$food_id)->update(['stock'=>$number]);
         if($result){
-            return $this->json_encode(1,"修改成功","");
+            $food = DB::table('food')->where('id',$food_id)->first();
+            return $this->json_encode(1,"修改成功",$food);
         }else{
-            return $this->json_encode(0,"修改失败","");
+            return $this->json_encode_nodata(0,"修改失败");
         }
     }
     
@@ -106,6 +106,8 @@ class CashierController extends Controller
         }
         $temp_order_id .= $desksn;
         $temp_order_id .= $time;
+        $foodinfos = []; //菜单
+        $orderprice = 0; //订单金额
         foreach($foods as $i=>$food){
             //判断food_id里有没有下滑线
            if(strpos($food['foodid'],'_')){
@@ -126,15 +128,54 @@ class CashierController extends Controller
                      'price' => $food['foodprice'],
                      'create_time' => $time,
                      'remark' => $inputs['remark'],
-                     'temp_order_no' => $temp_order_id
+                     'temp_order_no' => $temp_order_id,
+                     'source' => $inputs['source']
                      ]);
-           //$foodinfo = DB::table('food')->where('id',$food_id)->first();
-           //$foodcate = DB::table('food_cate')->where('id',$foodinfo->cate_id)->first();
+            $food1 = DB::table('food')->where('id',$food_id)->first();
+            if($pack_id!=0){
+                $package = DB::table('food_packages')->where('id',$pack_id)->first();
+                $foodinfos[$i]['title_zh_cn'] = $food1->title.'('.$package->name.')';
+                $foodinfos[$i]['title_en_us'] = $food1->title_en.'('.$package->name_en.')';
+                $foodinfos[$i]['title_vi'] = $food1->title_vi.'('.$package->name_vi.')';
+            }
+            else{
+                $foodinfos[$i]['title_zh_cn'] = $food1->title;
+                $foodinfos[$i]['title_en_us'] = $food1->title_en;
+                $foodinfos[$i]['title_vi'] = $food1->title_vi;
+            }
+                $foodinfos[$i]['number'] = $food['foodnum'];
+                $foodinfos[$i]['price'] =$food['foodprice']*$food['foodnum'];
+                $orderprice += $foodinfos[$i]['price'];
         }
+
+        $orderinfo = []; //订单信息
+        $partner = DB::table('partner')->where('id',$inputs['partner_id'])->first(); //查询商户信息
+        $printer = DB::table('printer')->where('partner_id',$inputs['partner_id'])->where('type',1)->first(); //查询商户前台打印机信息
+        $orderinfo['title'] = $partner->title;
+        $orderinfo['timezone'] = $partner->timezone;
+        $orderinfo['temp_order_no'] = $temp_order_id;
+        $orderinfo['create_time'] = $time;
+        $orderinfo['desk_sn'] = $inputs['desk_sn'];
+        $orderinfo['source'] = $inputs['source'];
+        $orderinfo['state'] = 0;
+        $orderinfo['remark'] = $inputs['remark'];
+        $orderinfo['order_price'] = $orderprice;
+        $orderinfo['discount_price'] = round($orderprice*(1-$partner->discount),2); //折扣价格
+        $orderinfo['tax_price'] = round($orderprice*$partner->fee_tax,2); //税费
+        $orderinfo['srv_price'] = round($orderprice*$partner->fee_srv,2); //服务费
+        $orderinfo['coupon'] = 0; //代金券金额
+        $orderinfo['service'] = ""; //支付方式
+        $orderinfo['last_price'] = round($orderprice-$orderinfo['discount_price']+$orderinfo['tax_price']+$orderinfo['srv_price']-$orderinfo['coupon'],2); //应收金额
+        $orderinfo['small_price'] = round($orderinfo['last_price']-floor($orderinfo['last_price']),2);
+        $orderinfo['pr_sn'] = $printer->pr_sn;
+        $orderinfo['lang'] = $printer->pr_lang;
+        $orderinfo['count'] = $printer->number;
+        $orderinfo['type'] = "order"; //下单
         if($result){
             //将桌位信息变成未结账
             DB::table('food_area_desk')->where('partner_id',$inputs['partner_id'])->where('desk_sn',$desk_sn)->update(['desk_state'=>3]);
             $data['temp_order_no'] = $temp_order_id;
+            CashierPrinter::orderPrint($orderinfo,$foodinfos); //下单打印
             return $this->json_encode(1,"下单成功",$data);
         }
         else{
@@ -361,13 +402,13 @@ class CashierController extends Controller
             $food = DB::table('food')->where('id',$v->food_id)->first();
             if($v->package_id!=0){
                 $package = DB::table('food_packages')->where('id',$v->package_id)->first();
-                $foodinfos[$i]['title'] = $food->title.'('.$package->name.')';
-                $foodinfos[$i]['title_en'] = $food->title_en.'('.$package->name_en.')';
+                $foodinfos[$i]['title_zh_cn'] = $food->title.'('.$package->name.')';
+                $foodinfos[$i]['title_en_us'] = $food->title_en.'('.$package->name_en.')';
                 $foodinfos[$i]['title_vi'] = $food->title_vi.'('.$package->name_vi.')';
             }
             else{
-                $foodinfos[$i]['title'] = $food->title;
-                $foodinfos[$i]['title_en'] = $food->title_en;
+                $foodinfos[$i]['title_zh_cn'] = $food->title;
+                $foodinfos[$i]['title_en_us'] = $food->title_en;
                 $foodinfos[$i]['title_vi'] = $food->title_vi;
             }
             $foodinfos[$i]['number'] = $v->number;
@@ -375,25 +416,43 @@ class CashierController extends Controller
             $orderprice += $foodinfos[$i]['price'];
         }
         $orderinfo = []; //订单信息
-        $partner = DB::table('partner')->where('id',$order_temps[0]->partner_id)->first();
-        $coupon = DB::table('order')->where('id',$order_temps[0]->order_id)->select('cost')->first();
-        $orderinfo['partner_name'] = $partner->title;
+        $partner = DB::table('partner')->where('id',$order_temps[0]->partner_id)->first(); //查询商户信息
+        $printer = DB::table('printer')->where('partner_id',$order_temps[0]->partner_id)->where('type',1)->first(); //查询商户前台打印机信息
+        $order = DB::table('order')->where('id',$order_temps[0]->order_id)->select('cost','service')->first(); //查询是否使用过代金券
+        $orderinfo['title'] = $partner->title;
+        $orderinfo['timezone'] = $partner->timezone;
         $orderinfo['temp_order_no'] = $temp_order_no;
         $orderinfo['create_time'] = $order_temps[0]->create_time;
         $orderinfo['desk_sn'] = $order_temps[0]->desk_sn;
         $orderinfo['source'] = $order_temps[0]->source;
         $orderinfo['state'] = $order_temps[0]->state;
+        $orderinfo['remark'] = $order_temps[0]->remark;
         $orderinfo['order_price'] = $orderprice;
         $orderinfo['discount_price'] = round($orderprice*(1-$partner->discount),2); //折扣价格
         $orderinfo['tax_price'] = round($orderprice*$partner->fee_tax,2); //税费
         $orderinfo['srv_price'] = round($orderprice*$partner->fee_srv,2); //服务费
-        $orderinfo['coupon'] = $coupon->cost; //代金券金额
+        if(!empty($order)){
+            $orderinfo['coupon'] = $order->cost; //代金券金额
+            $orderinfo['service'] = $order->service; //支付方式
+        }
+        else{
+            $orderinfo['coupon'] = 0; //代金券金额
+            $orderinfo['service'] = ""; //支付方式
+        }
         $orderinfo['last_price'] = round($orderprice-$orderinfo['discount_price']+$orderinfo['tax_price']+$orderinfo['srv_price']-$orderinfo['coupon'],2); //应收金额
         $orderinfo['small_price'] = round($orderinfo['last_price']-floor($orderinfo['last_price']),2);
-        //dd($orderinfo);exit;
-        $printer = DB::table('printer')->where('partner_id',$order_temps[0]->partner_id)->where('type',1)->first();
+        $orderinfo['pr_sn'] = $printer->pr_sn;
+        $orderinfo['lang'] = $printer->pr_lang;
+        $orderinfo['count'] = $printer->number;
+        if($order_temps[0]->state==1){
+            $orderinfo['type'] = "cash"; //结账汇总单
+        }
+        else{
+            $orderinfo['type'] = "del"; //已撤单
+        }
         $arr = [];
         if(!$order_temps->isEmpty()){
+            CashierPrinter::orderPrint($orderinfo,$foodinfos);
             $arr['code'] = 1;
             $arr['msg'] = "打印成功";
             $arr['orderinfo'] =  $orderinfo;
@@ -405,12 +464,99 @@ class CashierController extends Controller
         }
     }
 
-    //结账
+    //现金结账
     public function payment(Request $request)
     {
         $input = $request->all();
+        $coupon = $input['cost'];
         $ordertemps = DB::table('order_temp')->where('temp_order_no',$input['temp_order_no'])->get();
-        
+        if($ordertemps->isEmpty()) return $this->json_encode_nodata(0,"订单不存在");
+        $foodinfos = []; //菜单
+        $orderprice = 0; //订单金额
+        //获取菜单信息
+        foreach($ordertemps as $i=>$v){
+            $food = DB::table('food')->where('id',$v->food_id)->first();
+            if($v->package_id!=0){
+                $package = DB::table('food_packages')->where('id',$v->package_id)->first();
+                if($v->is_refund==1){  //如果这道菜被退了
+                    $foodinfos[$i]['title_zh_cn'] = '-'.$food->title.'('.$package->name.')';
+                    $foodinfos[$i]['title_en_us'] = '-'.$food->title_en.'('.$package->name_en.')';
+                    $foodinfos[$i]['title_vi'] = '-'.$food->title_vi.'('.$package->name_vi.')';
+                }
+                else{
+                    $foodinfos[$i]['title_zh_cn'] = $food->title.'('.$package->name.')';
+                    $foodinfos[$i]['title_en_us'] = $food->title_en.'('.$package->name_en.')';
+                    $foodinfos[$i]['title_vi'] = $food->title_vi.'('.$package->name_vi.')';
+                }
+            }
+            else{
+                if($v->is_refund==1){
+                    $foodinfos[$i]['title_zh_cn'] = '-'.$food->title;
+                    $foodinfos[$i]['title_en_us'] = '-'.$food->title_en;
+                    $foodinfos[$i]['title_vi'] = '-'.$food->title_vi;
+                }
+                else{
+                    $foodinfos[$i]['title_zh_cn'] = $food->title;
+                    $foodinfos[$i]['title_en_us'] = $food->title_en;
+                    $foodinfos[$i]['title_vi'] = $food->title_vi;
+                }
+            }
+            $foodinfos[$i]['number'] = $v->number;
+            if($v->is_refund==1){
+                $foodinfos[$i]['price'] = 0;
+            }
+            else{
+                $foodinfos[$i]['price'] = $v->price*$v->number;
+            }
+            $orderprice += $foodinfos[$i]['price'];
+        }
+        //打印信息
+        $orderinfo = []; 
+        $partner = DB::table('partner')->where('id',$ordertemps[0]->partner_id)->first(); //查询商户信息
+        $printer = DB::table('printer')->where('partner_id',$ordertemps[0]->partner_id)->where('type',1)->first(); //查询商户前台打印机信息
+        $orderinfo['title'] = $partner->title;
+        $orderinfo['timezone'] = $partner->timezone;
+        $orderinfo['temp_order_no'] = $input['temp_order_no'];
+        $orderinfo['create_time'] = $ordertemps[0]->create_time;
+        $orderinfo['desk_sn'] = $ordertemps[0]->desk_sn;
+        $orderinfo['source'] = $ordertemps[0]->source;
+        $orderinfo['remark'] = $ordertemps[0]->remark;
+        $orderinfo['order_price'] = $orderprice;
+        $orderinfo['discount_price'] = round($orderprice*(1-$partner->discount),2); //折扣价格
+        $orderinfo['tax_price'] = round($orderprice*$partner->fee_tax,2); //税费
+        $orderinfo['srv_price'] = round($orderprice*$partner->fee_srv,2); //服务费
+        $orderinfo['coupon'] = $coupon; //代金券金额
+        $orderinfo['service'] = 'cash'; //支付方式
+        $orderinfo['last_price'] = round($orderprice-$orderinfo['discount_price']+$orderinfo['tax_price']+$orderinfo['srv_price']-$orderinfo['coupon'],2); //应收金额
+        $orderinfo['small_price'] = round($orderinfo['last_price']-floor($orderinfo['last_price']),2);
+        $orderinfo['pr_sn'] = $printer->pr_sn;
+        $orderinfo['lang'] = $printer->pr_lang;
+        $orderinfo['count'] = $printer->number;
+        $orderinfo['type'] = "cash"; //结账汇总单
+        $pay_price = $orderinfo['last_price'] - $orderinfo['small_price'];
+        //插入订单表
+        $order_id = DB::table('order')->insertGetId([
+            'team_id' => $ordertemps[0]->team_id,
+            'partner_id' => $ordertemps[0]->partner_id,
+            'desk_sn' => $ordertemps[0]->desk_sn,
+            'bu_type' => 4,
+            'source' => 'cashier',
+            'service' => 'cash',
+            'state' => 'pay',
+            'cost' => $coupon,
+            'money' => $pay_price,
+            'create_time' => time(),
+            'pay_time' => time()
+        ]); 
+        if($order_id){
+            DB::table('order_temp')->where('temp_order_no',$orderinfo['temp_order_no'])->update(['state'=>1,'order_id'=>$order_id]); //更新下单临时表
+            DB::table('food_area_desk')->where('partner_id',$ordertemps[0]->partner_id)->where('desk_sn',$ordertemps[0]->desk_sn)->update(['desk_state'=>1]);//桌位状态改为空闲
+            CashierPrinter::orderPrint($orderinfo,$foodinfos); //结账打印
+            return $this->json_encode(1,"结账成功",$order_id);
+        }
+        else{
+            return $this->json_encode_nodata(1,"结账失败");
+        }
     }
 
     public function test(Request $request)

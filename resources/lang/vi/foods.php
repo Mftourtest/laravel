@@ -258,4 +258,9 @@ return [
     'waiter_manual_printing' => 'กดพิมพ์ใบเสร็จ', //手动打印
     'waiter_confirm_deletion' => 'ยืนยันการยกเลิกออร์เดอร์ ', //确认删除
     'waiter_already_printing' => 'ถูกพิมพ์', //已打印
+
+    //收银台
+    'cashier_source' => '下单人',
+    'cashier_order_price' => '订单价格',
+    'cashier_moling_price' => '抹零后金额',
 ];
