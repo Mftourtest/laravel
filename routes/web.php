@@ -128,5 +128,7 @@ Route::group(['middleware'=>'logins','prefix' => 'cashier'],function() {
     Route::any('select_orders', 'Cashier\CashierController@select_orders');//按时间范围查询订单 by xujin
     Route::any('order_detail', 'Cashier\CashierController@order_detail');//订单详情 by xujin
     Route::any('order_detail_printer', 'Cashier\CashierController@order_detail_printer');//订单详情打印 by xujin
+    Route::any('check_coupon', 'Cashier\CashierController@check_coupon');//验证代金券 by xujin
+    Route::any('shift', 'Cashier\CashierController@shift');//交班 by xujin
 });
 

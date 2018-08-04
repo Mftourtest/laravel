@@ -473,15 +473,16 @@ class CashierController extends Controller
         if($ordertemps->isEmpty()) return $this->json_encode_nodata(0,"订单不存在");
         $foodinfos = []; //菜单
         $orderprice = 0; //订单金额
+        $language = DB::table('language')->where('id',1)->first();//查询‘退’三种语言
         //获取菜单信息
         foreach($ordertemps as $i=>$v){
             $food = DB::table('food')->where('id',$v->food_id)->first();
             if($v->package_id!=0){
                 $package = DB::table('food_packages')->where('id',$v->package_id)->first();
                 if($v->is_refund==1){  //如果这道菜被退了
-                    $foodinfos[$i]['title_zh_cn'] = '-'.$food->title.'('.$package->name.')';
-                    $foodinfos[$i]['title_en_us'] = '-'.$food->title_en.'('.$package->name_en.')';
-                    $foodinfos[$i]['title_vi'] = '-'.$food->title_vi.'('.$package->name_vi.')';
+                    $foodinfos[$i]['title_zh_cn'] = $food->title.'('.$package->name.')['.$language->cn.']';
+                    $foodinfos[$i]['title_en_us'] = $food->title_en.'('.$package->name_en.')['.$language->en.']';
+                    $foodinfos[$i]['title_vi'] = $food->title_vi.'('.$package->name_vi.')['.$language->vi.']';
                 }
                 else{
                     $foodinfos[$i]['title_zh_cn'] = $food->title.'('.$package->name.')';
@@ -491,9 +492,9 @@ class CashierController extends Controller
             }
             else{
                 if($v->is_refund==1){
-                    $foodinfos[$i]['title_zh_cn'] = '-'.$food->title;
-                    $foodinfos[$i]['title_en_us'] = '-'.$food->title_en;
-                    $foodinfos[$i]['title_vi'] = '-'.$food->title_vi;
+                    $foodinfos[$i]['title_zh_cn'] = $food->title.'['.$language->cn.']';
+                    $foodinfos[$i]['title_en_us'] = $food->title_en.'['.$language->en.']';
+                    $foodinfos[$i]['title_vi'] = $food->title_vi.'['.$language->vi.']';
                 }
                 else{
                     $foodinfos[$i]['title_zh_cn'] = $food->title;
@@ -522,7 +523,7 @@ class CashierController extends Controller
         $orderinfo['source'] = $ordertemps[0]->source;
         $orderinfo['remark'] = $ordertemps[0]->remark;
         $orderinfo['order_price'] = $orderprice;
-        $orderinfo['discount_price'] = round($orderprice*(1-$partner->discount),2); //折扣价格
+        $orderinfo['discount_price'] = $input['discount_price']; //折扣价格
         $orderinfo['tax_price'] = round($orderprice*$partner->fee_tax,2); //税费
         $orderinfo['srv_price'] = round($orderprice*$partner->fee_srv,2); //服务费
         $orderinfo['coupon'] = $coupon; //代金券金额
@@ -557,6 +558,109 @@ class CashierController extends Controller
         else{
             return $this->json_encode_nodata(1,"结账失败");
         }
+    }
+
+    //验代金券接口
+    public function check_coupon(Request $request)
+    {
+        $input = $request->all();
+        $p_id = $input['partner_id'];
+        $coupon_id = $input['coupon_id'];
+        $arr = DB::table('coupon')->where('id',$coupon_id)->first(); //获取代金券信息
+        if(!empty($arr)){
+            $coupon_info = get_object_vars($arr);
+        }
+        else{
+            return $this->json_encode_nodata(0,"代金券不存在或已使用或失效");
+        }
+        $now = time();
+        if(!empty($arr)){
+          if($coupon_info['consume']=='N' && $now<=$coupon_info['expire_time']){
+             $expire_time = date("Y-m-d H:i:s",$coupon_info['expire_time']);
+             $sql = "SELECT c.id,pp.packagename,pp.denomination FROM `coupon` c,`orderteam` ot,`product_price` pp
+                     WHERE c.order_id=ot.id and ot.packageid=pp.id and c.partner_id=".$p_id." and c.id=".$coupon_id;
+             $order = DB::select($sql);   
+             $orders = get_object_vars($order[0]);
+             if(!empty($orders['denomination'])){
+                 $djq = floor($orders['denomination']);
+                 $ip = $_SERVER["REMOTE_ADDR"]; //获取客户端ip
+                 //使用完作废代金券
+                 //DB::table('coupon')->where('id',$coupon_id)->update(['consume'=>'Y','ip'=>$ip,'consume_time'=>time()]);
+                 return $this->json_encode(1,"代金券验证成功",$djq);
+            }   
+          }
+          else{
+            return $this->json_encode_nodata(0,"代金券不存在或已使用或失效");
+          }
+        }
+        else{
+            return $this->json_encode_nodata(0,"代金券不存在或已使用或失效");
+        }
+    }
+
+    //收银员交班接口
+    public function shift(Request $request)
+    {
+        $id = $request->input('user_id');
+        $admin = DB::table('partner_admin')->where('id',$id)->first();
+        $p_id = $admin->partner_id;
+        $partner = DB::table('partner')->where('id',$p_id)->first(); //商户信息
+        $printer = DB::table('printer')->where('partner_id',$p_id)->where('type',1)->first(); //商户打印机信息
+        if(!empty($printer)){
+            $print = get_object_vars($printer);
+        }
+        else{
+            return $this->json_encode_nodata(0,"没有打印信息");
+        }
+        $printinfos = [];  //要打印的信息
+        $login_time = $admin->login_time; //登陆时间
+        $now_time = time();               //登出时间
+        $printinfos['title'] = $partner->title;
+        $printinfos['start_time'] = date('Y-m-d H:i:s',$login_time);
+        $printinfos['end_time'] = date('Y-m-d H:i:s',$now_time);
+        $printinfos['cashier'] = $admin->name.'('.$admin->account.')';
+        //已结账统计
+        $printinfos['pay_count'] = DB::table('order')->where('partner_id',$p_id)->where('pay_time','>',$login_time)->where('pay_time','<=',$now_time)->count(); //已结账订单数
+        $printinfos['pay_order_price'] = 0; //已结账订单金额总计
+        $pay_ordertemps = DB::table('order_temp')->where('partner_id',$p_id)->where('create_time','>',$login_time)->where('create_time','<=',$now_time)
+            ->where('state',1)->where('is_refund',0)->get();
+        foreach($pay_ordertemps as $v){
+            $printinfos['pay_order_price'] += $v->price*$v->number;
+        }
+        $printinfos['last_price'] = DB::table('order')->where('partner_id',$p_id)->where('pay_time','>',$login_time)->where('pay_time','<=',$now_time)->sum('money');  //应收和实收金额
+        //未结账统计
+        $unpay_ordertemps = DB::table('order_temp')->where('partner_id',$p_id)->where('create_time','>',$login_time)->where('create_time','<=',$now_time)
+            ->where('state',0)->where('is_refund',0)->get();
+        $arr = [];
+        $printinfos['unpay_order_price'] = 0; //未结账订单金额合计
+        foreach($unpay_ordertemps as $v){
+            $arr[$v->temp_order_no][] = $v;
+            $printinfos['unpay_order_price'] += $v->price*$v->number;
+        }
+        $printinfos['unpay_count'] = count($arr); //未结账订单数
+        $printinfos['unpay_tax'] = round($printinfos['unpay_order_price']*$partner->fee_tax,2); //未结账税费合计
+        $printinfos['unpay_srv'] = round($printinfos['unpay_order_price']*$partner->fee_srv,2); //未结账服务费合计
+        $printinfos['unpay_ying_price'] = $printinfos['unpay_order_price'] + $printinfos['unpay_tax'] + $printinfos['unpay_srv']; //未结账应收合计
+        //撤单统计
+        $cancel_ordertemps = DB::table('order_temp')->where('partner_id',$p_id)->where('create_time','>',$login_time)->where('create_time','<=',$now_time)->where('state',2)->get();
+        $brr = [];
+        $printinfos['cancel_order_price'] = 0; //撤单订单金额合计
+        foreach($cancel_ordertemps as $v){
+            $brr[$v->temp_order_no][] = $v;
+            $printinfos['cancel_order_price'] += $v->price*$v->number;
+        }
+        $printinfos['cancel_count'] = count($brr); //撤单订单数
+        //退菜统计
+        $refund_ordertemps = DB::table('order_temp')->where('partner_id',$p_id)->where('create_time','>',$login_time)->where('create_time','<=',$now_time)
+            ->whereIn('state',[0,1])->where('is_refund',1)->get();
+        $printinfos['refund_price'] = 0; //退菜总价
+        $printinfos['refund_count'] = 0; //退菜份数
+        foreach($refund_ordertemps as $v){
+            $printinfos['refund_price'] += $v->price*$v->number;
+            $printinfos['refund_count'] +=1;
+        }
+        CashierPrinter::shiftPrint($printinfos,$print); //交班打印
+        return $this->json_encode(1,"打印成功",$printinfos);
     }
 
     public function test(Request $request)

@@ -229,6 +229,48 @@ class CashierPrinter {
         return $orderInfo;
     }
 
+    /**
+     * 交班打印
+     * @param $data
+     * @param $print
+     * @return string
+     */
+    public static function shiftPrint($data,$print)
+    {
+        $lang   = $print['pr_lang'];
+        $count  = $print['number'];     
+        App::setLocale($lang);
+        $orderInfo = '<C><BOLD>'.$data['title'].'</BOLD></C><BR>';
+        $orderInfo .= '<C><B>'.__('foods.cashier_shift_record').'</B></C><BR>'; 
+        $orderInfo .= '--------------------------------<BR>';
+        $orderInfo .= __('foods.cashier_start_time')."：{$data['start_time']}<BR>";
+        $orderInfo .= __('foods.cashier_end_time')."：{$data['end_time']}<BR>";
+        $orderInfo .= __('foods.cashier_cashier')."：{$data['cashier']}<BR>";
+        $orderInfo .= '--------------------------------<BR>';
+        $orderInfo .= '['.__('foods.cashier_pay_info').']<BR>'; //已结账信息汇总
+        $orderInfo .= __('foods.cashier_pay_count')."：{$data['pay_count']}<BR>";
+        $orderInfo .= __('foods.cashier_pay_ying')."：{$data['last_price']}<BR>";
+        $orderInfo .= __('foods.cashier_pay_shi')."：{$data['last_price']}<BR>";
+        $orderInfo .= '--------------------------------<BR>';
+        $orderInfo .= '['.__('foods.cashier_unpay_info').']<BR>'; //未结账信息汇总
+        $orderInfo .= __('foods.cashier_unpay_count')."：{$data['unpay_count']}<BR>";
+        $orderInfo .= __('foods.cashier_unpay_price')."：{$data['unpay_order_price']}<BR>";
+        $orderInfo .= __('foods.cashier_unpay_tax')."：{$data['unpay_tax']}<BR>";
+        $orderInfo .= __('foods.cashier_unpay_srv')."：{$data['unpay_srv']}<BR>";
+        $orderInfo .= __('foods.cashier_pay_ying')."：{$data['unpay_ying_price']}<BR>";
+        $orderInfo .= '--------------------------------<BR>';
+        $orderInfo .= '['.__('foods.cashier_cancel_info').']<BR>'; //已撤单信息汇总
+        $orderInfo .= __('foods.cashier_cancel_count')."：{$data['cancel_count']}<BR>";
+        $orderInfo .= __('foods.cashier_cancel_price')."：{$data['cancel_order_price']}<BR>";
+        $orderInfo .= '--------------------------------<BR>';
+        $orderInfo .= '['.__('foods.cashier_refund_info').']<BR>'; //退菜信息汇总
+        $orderInfo .= __('foods.cashier_refund_count')."：{$data['refund_count']}<BR>";
+        $orderInfo .= __('foods.cashier_refund_price')."：{$data['refund_price']}<BR>";
+        $orderInfo .= '--------------------------------<BR>';
+        $orderInfo .= '<B>'.__('foods.cashier_sign').':</B><BR>'; 
+        self::wpPrint($print['pr_sn'], $orderInfo, 1);
+    }
+
 
     /**
      * @param $arr
