@@ -285,4 +285,6 @@ return [
     'cashier_refund_count' => '退菜份数',
     'cashier_refund_price' => '退菜金额合计',
     'cashier_sign' => '收银员签字',
+    'cashier_cancel_order' => '已撤单',
+    'cashier_add_food' => '加菜',
 ];

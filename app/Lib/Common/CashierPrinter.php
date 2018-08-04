@@ -25,10 +25,11 @@ class CashierPrinter {
      * 收银台订单详情打印
      * @param $order
      * @param $foodinfos
+     * @param $printer  object
      */
-    public static function orderPrint($order, $foodinfos)
+    public static function orderPrint($order, $foodinfos,$printer)
     {
-        list($lang, $count, $orderInfo) = self::headerPrint($order); //头部打印信息
+        list($lang, $count, $orderInfo) = self::headerPrint($order,$printer); //头部打印信息
 
         $footData = array(
             'timezone'       => $order['timezone'], //时区
@@ -62,66 +63,61 @@ class CashierPrinter {
         $orderInfo .= $info;
         $orderInfo .= self::footerPrint($footData);
         for ($i=0; $i<$count; $i++) {
-            self::wpPrint($order['pr_sn'], $orderInfo, 1);
+            self::wpPrint($printer->pr_sn, $orderInfo, 1);
         }
         
     }
 
 
     /**
-     * @param $partner
-     * @param $order
-     * @param $orderTeam
+     * 后厨打印
+     * @param $foodinfos  array 
+     * @param $order      array 
+     * @param $cate_prints array
      */
-    public static function categoryPrint($partner, $order, $orderTeam)
+    public static function categoryPrint($order, $foodinfos,$cate_prints)
     {
-        foreach ($orderTeam as $key=>$team) {
-            $package = unserialize($team['package']);
-            $order['desk_sn'] = $package['desk_sn'];
-        }
-        if($order['service']=='unpaid'){
-            $order['type'] = 'order';
-        }
-        if($order['service']=='cash' || $order['service']=='wechat'){
-            $order['type'] = 'cash';
-        }
-        if(empty($order['remark'])){
-            $order['remark'] = "";
-        }
-        $prSnCate = explode('#', $partner['pr_sn_cate']);
-        foreach ($prSnCate as $prSn) {
-            list($lang, $count, $orderInfo) = self::headerPrint($partner,$order);
-            $footData = array(
-                'timezone'  => $partner['timezone'],
-                'deskSn'   => '',
-                'service'   => $order['service'],
-                'remark'    => $order['remark'],
-            );
-            $suffix = '_'.$lang;
+        foreach($cate_prints as $cate_print){
+            $lang = $cate_print['pr_lang'];
+            $count = $cate_print['number'];
+            App::setLocale($lang);
+            if($order['type']=='order'){     //下单
+                $type = __('foods.waiter_single_summary');
+            }
+            else if($order['type']=='cancel'){ //退菜
+                $type = __('foods.waiter_collection_vegetables');
+            }
+            else if($order['type']=='add'){ //加菜
+                $type = __('foods.cashier_add_food');
+            }
+            $orderInfo = '<C><BOLD>'.$order['title'].'</BOLD></C><BR>';
+            $orderInfo .= '<C><B>'.__('foods.waiter_table_no').'：'.$order['desk_sn'].'</B></C><BR>';
+            $orderInfo .= '<C><B>'.$type.'</B></C><BR>';
+            $orderInfo .= '--------------------------------<BR>';
             $arr = [];
-            foreach ($orderTeam as $i=>$ot) {
-                $package = unserialize($ot['package']);
-                $footData['deskSn'] = $package['desk_sn'];
-                if ($prSn == $package['pr_sn']) {
-                    $arr[$i] = array(
-                        'title'  => $package['title' . $suffix],
-                        'price'  => $ot['price'],
-                        'num'    => $ot['quantity'],
-                        'prices' => $ot['price'] * $ot['quantity'],
-                    );
+            $i = 0;
+            $suffix = '_'.$lang;
+            $cate_ids = explode(',', $cate_print['cate_id']);
+            foreach ($cate_ids as $cate_id) {            
+                foreach ($foodinfos as $food) {
+                    if($cate_id==$food['cate_id']){  //如果菜品的类别id和打印的分类id一样就把菜信息填到打印数组
+                        $arr[$i] = array(
+                        'title'  => $food['title' . $suffix],
+                        'num'    => floor($food['number']),
+                        'prices' => $food['price']
+                       );
+                       $i = $i+1;
+                    }
                 }
             }
-           
-            list($info, $nums) = self::typeSetting($arr, 14, 7, 3, 6);
-
+            list($info) = self::typeSetting1($arr, 28, 2);
             $orderInfo .= $info; // var_dump($info);
-
-            $orderInfo .= self::kitchenFooterPrint($footData);
-            //for ($i=0; $i<$count; $i++) {
-            if(count($arr) > 0) {
-                self::wpPrint($prSn, $orderInfo, 1);
+            $orderInfo .= self::kitchenFooterPrint($order);
+            if(!empty($arr)){
+                for ($i=0; $i<$count; $i++) {
+                    self::wpPrint($cate_print['pr_sn'], $orderInfo, 1);
+                }
             }
-            //}
         }
     }
 
@@ -156,10 +152,10 @@ class CashierPrinter {
      * @param $partner
      * @return array
      */
-    public static function headerPrint($order)
+    public static function headerPrint($order,$printer)
     {
-        $lang   = $order['lang'];
-        $count  = $order['count'];
+        $lang   = $printer->pr_lang;
+        $count  = $printer->number;
         
         App::setLocale($lang);
         if($order['type']=='order'){     //下单
@@ -172,7 +168,10 @@ class CashierPrinter {
             $type = __('foods.waiter_collection_vegetables');
         }
         else if($order['type']=='del'){ //撤单
-            $type = "已撤单";
+            $type = __('foods.cashier_cancel_order');
+        }
+        else if($order['type']=='add'){ //加菜
+            $type = __('foods.cashier_add_food');
         }
         $orderInfo = '<C><BOLD>'.$order['title'].'</BOLD></C><BR>';
         $orderInfo .= '<C><B>'.__('foods.waiter_table_no').'：'.$order['desk_sn'].'</B></C><BR>';
@@ -219,26 +218,26 @@ class CashierPrinter {
      */
     public static function kitchenFooterPrint($data)
     {
+        $time = date('Y-m-d H:i:s', time());
         $orderInfo = '';
         $orderInfo .= '--------------------------------<BR>';
         $orderInfo .= __('foods.food_remark').'：'.$data['remark'].'<BR>';
         $orderInfo .= '--------------------------------<BR>';
-
-        $time = date('Y-m-d H:i:s', time());
-        $orderInfo .= "$time<BR>";
+        $orderInfo .= __('foods.biz_order_id')."：{$data['temp_order_no']}<BR>";
+        $orderInfo .= __('foods.biz_order_create_time')."：{$time}<BR>";
         return $orderInfo;
     }
 
     /**
      * 交班打印
-     * @param $data
-     * @param $print
+     * @param $data  array
+     * @param $print object
      * @return string
      */
     public static function shiftPrint($data,$print)
     {
-        $lang   = $print['pr_lang'];
-        $count  = $print['number'];     
+        $lang   = $print->pr_lang;
+        $count  = $print->number;     
         App::setLocale($lang);
         $orderInfo = '<C><BOLD>'.$data['title'].'</BOLD></C><BR>';
         $orderInfo .= '<C><B>'.__('foods.cashier_shift_record').'</B></C><BR>'; 
@@ -268,7 +267,9 @@ class CashierPrinter {
         $orderInfo .= __('foods.cashier_refund_price')."：{$data['refund_price']}<BR>";
         $orderInfo .= '--------------------------------<BR>';
         $orderInfo .= '<B>'.__('foods.cashier_sign').':</B><BR>'; 
-        self::wpPrint($print['pr_sn'], $orderInfo, 1);
+        for ($i=0; $i<$count; $i++) {
+            self::wpPrint($print->pr_sn, $orderInfo, 1);
+        }
     }
 
 
@@ -360,7 +361,75 @@ class CashierPrinter {
         return array($orderInfo, $nums);
     }
 
+    /**
+     * @param $arr
+     * @param $A
+     * @param $C
+     * @param $D
+     * @return array
+     */
+    public static function typeSetting1($arr, $A, $C) //, $B
+    {
+        $orderInfo = '';
+        $nums = 0;
 
+        foreach ($arr as $k5 => $v5) {
+            $name = $v5['title'];
+            $num = $v5['num'];
+            $kw1 = '';
+            $kw2 = '';
+            $kw3 = '';
+            $kw4 = '';
+            $str = $name;
+            $blankNum = $A;//名称控制为14个字节
+            $lan = mb_strlen($str, 'utf-8');
+            $m = 0;
+            $j = 1;
+            $blankNum ++;
+            $result = array();
+
+            $tail='';
+            for ($i=0; $i<$lan; $i++){
+                $new = mb_substr($str, $m, $j, 'utf-8');
+                $j ++;
+                if(mb_strwidth($new, 'utf-8') < $blankNum) {
+                    if($m+$j>$lan) {
+                        $m = $m+$j;
+                        $tail = $new;
+                        $lenght = iconv("UTF-8", "GBK//IGNORE", $new);
+                        $k = $A - strlen($lenght);
+                        for($q=0; $q<$k; $q++){
+                            $kw3 .= ' ';
+                        }
+                        $tail .= $kw3;
+                        break;
+                    }else{
+                        $next_new = mb_substr($str, $m, $j, 'utf-8');
+                        if(mb_strwidth($next_new, 'utf-8') < $blankNum)
+                            continue;
+                        else{
+                            $m = $i+1;
+                            $result[] = $new.'<BR>';
+                            $j = 1;
+                        }
+                    }
+                }
+            }
+            $head = '';
+            foreach ($result as $value) {
+                $head .= $value;
+            }
+            if(strlen($num) < $C){
+                $k2 = $C - strlen($num);
+                for($q=0;$q<$k2;$q++){
+                    $kw2 .= ' ';
+                }
+                $num = $num.$kw2;
+            }
+            $orderInfo .= $num.' '.$head.$tail.'<BR>';
+        }
+        return array($orderInfo);
+    }
     /**
      * @param $arr
      * @param $A
@@ -375,7 +444,6 @@ class CashierPrinter {
 
         foreach ($arr as $k5 => $v5) {
             $name = $v5['title'];
-            //$price = $v5['price'];
             $num = $v5['num'];
             $prices = $v5['prices'];
             $kw1 = '';
