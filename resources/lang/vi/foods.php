@@ -258,4 +258,30 @@ return [
     'waiter_manual_printing' => 'กดพิมพ์ใบเสร็จ', //手动打印
     'waiter_confirm_deletion' => 'ยืนยันการยกเลิกออร์เดอร์ ', //确认删除
     'waiter_already_printing' => 'ถูกพิมพ์', //已打印
+
+    //收银台
+    'cashier_source' => '下单人',
+    'cashier_order_price' => '订单价格',
+    'cashier_moling_price' => '抹零后金额',
+    'cashier_shift_record' => '收银交班统计',
+    'cashier_start_time' => '开班时间',
+    'cashier_end_time' => '交班时间',
+    'cashier_cashier' => '收银员',
+    'cashier_pay_info' => '已结账收银信息',
+    'cashier_pay_count' => '已结账订单数',
+    'cashier_pay_order_price' => '已结账订单金额',
+    'cashier_pay_ying' => '应收合计',
+    'cashier_pay_shi' => '实收合计',
+    'cashier_unpay_info' => '未结账信息',
+    'cashier_unpay_count' => '未结账订单数',
+    'cashier_unpay_price' => '未结账订单金额',
+    'cashier_unpay_tax' => '未结账税费合计',
+    'cashier_unpay_srv' => '未结账服务费合计',
+    'cashier_cancel_info' => '已撤单信息',
+    'cashier_cancel_count' => '已撤单订单数',
+    'cashier_cancel_price' => '已撤单订单金额',
+    'cashier_refund_info' => '退菜信息',
+    'cashier_refund_count' => '退菜份数',
+    'cashier_refund_price' => '退菜金额合计',
+    'cashier_sign' => '收银员签字',
 ];

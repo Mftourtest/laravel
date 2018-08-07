@@ -380,44 +380,16 @@
                                         <h4 class="modal-title">@lang('foods.waiter_menu')</h4>
                                     </div>
                                     <div class="modal-body">
-<<<<<<< HEAD
                                          <p>One fine body&hellip;</p>
                                         <span class="label label-default">Default</span>
-=======
-                                         <!-- <p>One fine body&hellip;</p> -->
-                                         <input type="text" name="">
-                                       <!--  <span class="label label-default">Default</span>
->>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
-                                        <span class="label label-primary">Primary</span>
-                                        <span class="label label-success">Success</span>
-                                        <span class="label label-info">Info</span>
-                                        <span class="label label-warning">Warning</span>
-                                        <span class="label label-danger">Danger</span>
-                                        <span class="label label-default">Default</span>
-                                        <span class="label label-primary">Primary</span>
-                                        <span class="label label-success">Success</span>
-                                        <span class="label label-info">Info</span>
-                                        <span class="label label-warning">Warning</span>
-<<<<<<< HEAD
-                                        <span class="label label-danger">Danger</span>  
                                     </div>
                                     <div class="modal-footer">
                                         <div class="modal-price"></div>
                                         <button id="toCart" type="button" class="btn btn-primary" style="display: none;" disabled>加入购物车</button>
-                                        <div class="calc calc2 modal-pm" data-id="" data-title="" data-price="" style="display: none;">
-=======
-                                        <span class="label label-danger">Danger</span>   -->
-                                        <!-- <div>฿{{$food['price']}}</div> -->
-
-                                    </div>
-                                    <div class="modal-footer">
-                                        <div class="modal-price">111</div>
-                                        <button id="toCart" type="button" class="btn btn-primary" style="display: none;" disabled>加入购物车</button>
-                                        <div class="calc calc2 modal-pm" data-id="" data-title="" data-price="" >
->>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
-                                            <span class="glyphicon glyphicon-minus-sign icon-color2" style="opacity: 0;"></span>
+                                        <div class="calc calc2 modal-pm" data-id="" data-title="" data-price="" data-weight="">
+                                            <span class="glyphicon glyphicon-minus-sign icon-color2 reduce" style="opacity: 0;"></span>
                                             <div class="num">0</div>
-                                            <span class="glyphicon glyphicon-plus-sign icon-color2"></span>
+                                            <span class="glyphicon glyphicon-plus-sign icon-color2 add"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -660,7 +632,9 @@
         // 点击规格套餐
         $(".pack").on("click", function (e) {
             $(".modal-body").empty();
-            $(".calc2").hide();
+            // $(".calc2").hide();
+            // $(".modal-price").hide();
+            $('.modal-footer').hide();
             var id = $(this).next().attr("data-id");
             var packages = $(this).next().children();
             //$(".modal-body").append('<input type="hidden" name="fid" value="'+id+'">');
@@ -672,31 +646,57 @@
                 $label = '<span class="label label-info label1" data-id="' + $(this).attr("data-id") + '" data-price="' + $(this).attr("data-price") + '" all-name="' + $(this).attr("all-name") +'">' + $(this).attr("data-name") + '</span>\n';
                 $(".modal-body").append($label);
             })
+             // $(".calc2").show();
+             // $(".modal-price").show();
+             $('.modal-footer').show();
         });
 
-<<<<<<< HEAD
-=======
+		var weight;
         $(".seafood").on("click", function (e) {
+        	
+        	var d_price;
+        	var modal;
+        	var all_name;
             $(".modal-body").empty();
             // $(".calc2").hide();
+            // $(".modal-price").hide();
+            $('.modal-footer').hide();
             var id = $(this).next().attr("data-id");
+            console.log(id);
             var packages = $(this).next().children();
             //$(".modal-body").append('<input type="hidden" name="fid" value="'+id+'">');
             packages.each(function (i, e) {
                 console.log(i, $(this).attr("data-name"), $(this).attr("data-price"));
-                if (i == 0) {
-                    $(".modal-price").html($(this).attr("data-price"));
-                } //' + (i==0?'label-primary':'label-info') + '
-                $label = '<span class="label label-info label1" data-id="' + $(this).attr("data-id") + '" data-price="' + $(this).attr("data-price") + '" all-name="' + $(this).attr("all-name") +'">' + $(this).attr("data-name") + '</span>\n';
-                // $label = '<input type="text" name="" data-price="' + $(this).attr("data-price")'" />';
-                $(".modal-body").append($label);
+                if (i == 1) {
+                	d_price = $(this).attr("data-price"); 
+                	all_name = $(this).attr("data-name");
+                	$label = '<input type="text" name="" data-price="'+d_price+'" class="foods-input label1" value="" data-id="'+$(this).attr("data-id")+'" all-name="'+ all_name +'" placeholder="请输入重量" />'              
+                   
+            		$(".modal-body").append($label);
+                } 
+                
+            })
+            $('.foods-input').blur(function(){
+            	weight= $(this).val();
+            	modal = $(".modal-price").html(parseFloat(d_price)*weight);
+            	var id = $(this).attr("data-id");
+	            var price = parseFloat($(this).attr("data-price"))*weight;
+	            var title = $(this).attr("all-name")+'('+weight+'kg)';
+	            $(".calc2").attr("data-id", id);
+	            $(".calc2").attr("data-price", price);
+	            $(".calc2").attr('data-title', title);
+	            // $(".calc2").attr('data-weight', weight);
+	            $(".calc2").addClass("calc_"+id);
+	            // $(".calc2").show();
+	            //  $(".modal-price").show();
+	            $('.modal-footer').show();
             })
         });
 
 
->>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
         // 规格标签点击 label1
         $(".modal-body").on("click", ".label1", function (e) {
+
             var id = $(this).attr("data-id");
             var price = parseFloat($(this).attr("data-price"));
             var title = $(this).attr("all-name");
@@ -713,7 +713,7 @@
             var num = !$("#food_"+id).find(".num").html()?0:$("#food_"+id).find(".num").html();
             console.log('zynum:', num);
             $(".calc2").find(".num").html(num);
-
+            console.log($(".calc2").find(".num").text());
         });
 
         /**
@@ -750,7 +750,6 @@
             // 初始化
             var op = e.data.op;
             var id = $(this).parent().attr("data-id");
-
             var title = $(this).parent().attr("data-title");
             var n = parseInt($(this).parent().children(".num").html()); //
             var nTotal = parseInt($(".num1").html());
@@ -847,14 +846,12 @@
         });
 
 		</script>
-<<<<<<< HEAD
-=======
+
 		<script type="text/javascript">
 			$(".pack").click(function(){
 				console.log($('.shopprice').html());
 			})
 		</script>
->>>>>>> 5792947089d9102e517c1b0db06b8aec421186a8
 	</body>
 
 </html>
