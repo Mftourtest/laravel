@@ -118,7 +118,6 @@ class NewPrinter {
 
 
     /**
-     * 一菜一打印
      * @param $partner
      * @param $order
      * @param $orderTeam
@@ -165,62 +164,20 @@ class NewPrinter {
                     self::wpPrint($prSn, $orderInfo, 1);               
                 }
             }
+           
+            //list($info, $nums) = self::typeSetting($arr, 14, 7, 3, 6);
+
+            //$orderInfo .= $info; // var_dump($info);
+
+            //$orderInfo .= self::kitchenFooterPrint($footData);
+            //for ($i=0; $i<$count; $i++) {
+           // if(count($arr) > 0) {
+            //    self::wpPrint($prSn, $orderInfo, 1);
+            //}
+            //}
         }
     }
 
-    /**
-     * 后厨菜连续打印
-     * @param $partner
-     * @param $order
-     * @param $orderTeam
-     */
-    public static function continuityPrint($partner, $order, $orderTeam)
-    {
-        foreach ($orderTeam as $key=>$team) {
-            $package = unserialize($team['package']);
-            $order['desk_sn'] = $package['desk_sn'];
-        }
-        if($order['service']=='unpaid'){
-            $order['type'] = 'order';
-        }
-        if($order['service']=='cash' || $order['service']=='wechat'){
-            $order['type'] = 'cash';
-        }
-        if(empty($order['remark'])){
-            $order['remark'] = "";
-        }
-        $prSnCate = explode('#', $partner['pr_sn_cate']);
-        foreach ($prSnCate as $prSn) {
-            list($lang, $count, $orderInfo) = self::headerPrint($partner,$order);
-            $footData = array(
-                'timezone'  => $partner['timezone'],
-                'deskSn'   => '',
-                'service'   => $order['service'],
-                'remark'    => $order['remark'],
-            );
-            $suffix = '_'.$lang;
-            $arr = [];
-            foreach ($orderTeam as $i=>$ot) {
-                $package = unserialize($ot['package']);
-                $footData['deskSn'] = $package['desk_sn'];
-                if ($prSn == $package['pr_sn']) {
-                    $arr[$i] = array(
-                        'title'  => $package['title' . $suffix],
-                        'price'  => $ot['price'],
-                        'num'    => $ot['quantity'],
-                        'prices' => $ot['price'] * $ot['quantity'],
-                    );           
-                }
-            }     
-            //菜连续打印
-            if(!empty($arr)){
-                list($info) = self::typeSetting1($arr, 28, 2);
-                $orderInfo .= $info;
-                $orderInfo .= self::kitchenFooterPrint($footData);
-                self::wpPrint($prSn, $orderInfo, 1);    
-            }
-        }
-    }
 
     /**
      * @param $partner

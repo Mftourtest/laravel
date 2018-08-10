@@ -13,7 +13,6 @@ use App\Lib\Wechat\Jssdk;
 use App\Lib\Wechat\Pay;
 use App\Lib\Wechat\HttpRequest;
 use App\Lib\Common\Printer;
-use App\Lib\Common\NewPrinter;
 use App\Lib\Common\Helper;
 
 use App\Models\Team;
@@ -313,12 +312,7 @@ class FoodsController extends Controller
                 session(['remark'=>$order['remark']]);
 
                 if (!empty($this->partner->pr_sn_cate)) {
-                    if($this->partner->kitchen==1){ //后厨一菜一打
-                        NewPrinter::categoryPrint($this->partner, $order, $orderTeam);
-                    }
-                    else{
-                        NewPrinter::continuityPrint($this->partner, $order, $orderTeam);//后厨连续打印
-                    }
+                    Printer::categoryPrint($this->partner, $order, $orderTeam);
                 }
                 if ($this->partner['scale'] == '0') {
                     Printer::singlePrint($this->partner, $order, $orderTeam);
@@ -516,15 +510,9 @@ class FoodsController extends Controller
                 $order = Order::where(['id' => $params['order_id']])->first();
                 $order['service'] = 'cash';
                 $orderTeam = OrderTeam::where(['orderid' => $params['order_id']])->get();
-                //结账不打印
-/*                 if (!empty($this->partner['pr_sn_cate'])) {
-                    if($this->partner->kitchen==1){ //后厨一菜一打
-                        NewPrinter::categoryPrint($this->partner, $order, $orderTeam);
-                    }
-                    else{
-                        NewPrinter::continuityPrint($this->partner, $order, $orderTeam);//后厨连续打印
-                    }
-                } */
+                if (!empty($this->partner['pr_sn_cate'])) {
+                    Printer::categoryPrint($this->partner, $order, $orderTeam); // ----------- ???
+                }
                 Printer::singlePrint($this->partner, $order, $orderTeam); // ----------- ???
 
                 return redirect()->route('foods.done', [

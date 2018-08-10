@@ -213,12 +213,10 @@ class NewPrinter {
                 }
             }     
             //菜连续打印
-            if(!empty($arr)){
-                list($info) = self::typeSetting1($arr, 28, 2);
-                $orderInfo .= $info;
-                $orderInfo .= self::kitchenFooterPrint($footData);
-                self::wpPrint($prSn, $orderInfo, 1);    
-            }
+            list($info) = self::typeSetting1($arr, 28, 2);
+            $orderInfo .= $info;
+            $orderInfo .= self::kitchenFooterPrint($footData);
+            self::wpPrint($prSn, $orderInfo, 1);    
         }
     }
 
